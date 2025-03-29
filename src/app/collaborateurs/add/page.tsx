@@ -4,33 +4,13 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-
-interface CollaborateurData {
-  photo?: File | null;
-  matricule?: string;
-  prenom: string;
-  nom: string;
-  sexe: 'Homme' | 'Femme';
-  cin: string;
-  dateNaissance: string;
-  status: 'Actif' | 'Inactif';
-  email: string;
-  telephone?: string;
-  electionDomicile?: string;
-  situationFamiliale?: string;
-  nombrePersonnesACharge?: number;
-  cnss?: string;
-  nombreAnneeExperience?: number;
-  niveauQualification?: string;
-  titrePosteOccupe?: string;
-  rib?: string;
-  situationEntreprise?: string;
-  dateEmbauche?: string;
-  tachesAccomplies?: string;
-}
+import { useRouter } from 'next/navigation';
+import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 
 export default function Page() {
-  const [formData, setFormData] = useState<CollaborateurData>({
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<Collaborateur>({
     prenom: '',
     nom: '',
     sexe: 'Homme',
@@ -41,6 +21,7 @@ export default function Page() {
   });
 
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -56,15 +37,40 @@ export default function Page() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form Data:', formData);
-    console.log('Profile Photo:', profilePhoto);
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      // Préparer les données à envoyer
+      const collaborateurData: Collaborateur = {
+        ...formData,
+        photo: profilePhoto
+      };
+
+      // Envoyer les données au serveur
+      await collaborateurService.create(collaborateurData);
+
+      // Rediriger vers la liste des collaborateurs
+      router.push('/collaborateurs');
+    } catch (error) {
+      console.error('Erreur lors de la soumission :', error);
+      setErrorMessage('Une erreur est survenue lors de l\'ajout du collaborateur. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Ajouter un Collaborateur</h1>
+
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {errorMessage}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Photo Upload Section */}
@@ -80,7 +86,9 @@ export default function Page() {
                   className="rounded-full object-cover"
                 />
               ) : (
-                <span className="text-gray-500 dark:text-gray-400">Glisser & Déposer la photo de profile ou Parcourir</span>
+                <span className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                  Glisser & Déposer la photo de profile ou Parcourir
+                </span>
               )}
             </div>
             <input
@@ -99,14 +107,17 @@ export default function Page() {
           </div>
         </div>
 
+        {/* Le reste du formulaire reste inchangé, seuls les gestionnaires d'événements ont été modifiés */}
+        {/* ... (conservez les sections existantes du formulaire) ... */}
+
         {/* Personal Base Information */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Informations Personnelles de Base</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               name="matricule"
               label="Matricule"
-              value={formData.matricule}
+              value={formData.matricule || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
@@ -143,6 +154,7 @@ export default function Page() {
             <Input
               name="cin"
               label="CIN"
+              required
               value={formData.cin}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
@@ -152,6 +164,7 @@ export default function Page() {
               name="dateNaissance"
               label="Date de Naissance"
               type="date"
+              required
               value={formData.dateNaissance}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
@@ -175,7 +188,7 @@ export default function Page() {
         {/* Contact Information */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Coordonnées</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               name="email"
               label="Email"
@@ -188,14 +201,14 @@ export default function Page() {
             <Input
               name="telephone"
               label="Numéro de Téléphone"
-              value={formData.telephone}
+              value={formData.telephone || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
             <Input
               name="electionDomicile"
               label="Election de Domicile"
-              value={formData.electionDomicile}
+              value={formData.electionDomicile || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
@@ -205,12 +218,12 @@ export default function Page() {
         {/* Family Situation */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Situation Familiale</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation Familiale</label>
               <select
                 name="situationFamiliale"
-                value={formData.situationFamiliale}
+                value={formData.situationFamiliale || ''}
                 onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
               >
@@ -224,14 +237,14 @@ export default function Page() {
               name="nombrePersonnesACharge"
               label="Nombre de Personnes à Charge (Enfants)"
               type="number"
-              value={formData.nombrePersonnesACharge}
+              value={formData.nombrePersonnesACharge?.toString() || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
             <Input
               name="cnss"
               label="CNSS"
-              value={formData.cnss}
+              value={formData.cnss || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
@@ -241,12 +254,12 @@ export default function Page() {
         {/* Professional Details */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Détails Professionnels</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               name="nombreAnneeExperience"
               label="Nombre d'Années d'Expérience"
               type="number"
-              value={formData.nombreAnneeExperience}
+              value={formData.nombreAnneeExperience?.toString() || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
@@ -254,7 +267,7 @@ export default function Page() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Niveau de Qualification ou Diplôme Obtenu</label>
               <select
                 name="niveauQualification"
-                value={formData.niveauQualification}
+                value={formData.niveauQualification || ''}
                 onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
               >
@@ -268,7 +281,7 @@ export default function Page() {
             <Input
               name="titrePosteOccupe"
               label="Titre du Poste Occupé"
-              value={formData.titrePosteOccupe}
+              value={formData.titrePosteOccupe || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
@@ -276,7 +289,7 @@ export default function Page() {
             <Input
               name="rib"
               label="RIB"
-              value={formData.rib}
+              value={formData.rib || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
@@ -285,7 +298,7 @@ export default function Page() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation dans l'Entreprise</label>
               <select
                 name="situationEntreprise"
-                value={formData.situationEntreprise}
+                value={formData.situationEntreprise || ''}
                 onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
               >
@@ -300,7 +313,7 @@ export default function Page() {
               name="dateEmbauche"
               label="Date d'Embauche"
               type="date"
-              value={formData.dateEmbauche}
+              value={formData.dateEmbauche || ''}
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
@@ -310,7 +323,7 @@ export default function Page() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tâches Accomplies</label>
             <textarea
               name="tachesAccomplies"
-              value={formData.tachesAccomplies}
+              value={formData.tachesAccomplies || ''}
               onChange={handleInputChange}
               rows={4}
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
@@ -322,12 +335,13 @@ export default function Page() {
         <div className="flex justify-end">
           <Button
             type="submit"
+            disabled={isSubmitting}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-600"
           >
-            Enregistrer le Collaborateur
+            {isSubmitting ? 'Enregistrement...' : 'Enregistrer le Collaborateur'}
           </Button>
         </div>
       </form>
     </div>
   );
-};
+}

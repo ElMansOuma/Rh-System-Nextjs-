@@ -107,11 +107,11 @@ export const NAV_DATA = [
 
     items: [
       {
-      title: "Déconnexion",
-      url: "/auth/deconnexion",
-      icon: LogOutIcon,
-      items: [],
-    },
+        title: "Déconnexion",
+        url: "/auth/deconnexion",
+        icon: LogOutIcon,
+        items: [],
+      },
 
     ],
   },
