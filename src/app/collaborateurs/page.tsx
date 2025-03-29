@@ -11,9 +11,8 @@ import {
   TableRow
 } from '@/components/ui/table';
 import Link from 'next/link';
-import { UserPlus, Edit, Trash2, Search, Filter, FileText } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Search, Filter, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
-import Image from 'next/image';
 
 export default function Page() {
   const [collaborateurs, setCollaborateurs] = useState<Collaborateur[]>([]);
@@ -23,6 +22,12 @@ export default function Page() {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'Tous' | 'Actif' | 'Inactif'>('Tous');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Fetch collaborateurs
   useEffect(() => {
@@ -40,6 +45,8 @@ export default function Page() {
         }
 
         setCollaborateurs(data);
+        setTotalItems(data.length);
+        setTotalPages(Math.ceil(data.length / itemsPerPage));
         setError(null);
       } catch (err) {
         console.error('Failed to fetch collaborateurs:', err);
@@ -50,7 +57,7 @@ export default function Page() {
     };
 
     fetchCollaborateurs();
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, itemsPerPage]);
 
   // Handle delete collaborateur
   const handleDeleteCollaborateur = async (id: number) => {
@@ -58,6 +65,11 @@ export default function Page() {
       try {
         await collaborateurService.delete(id);
         setCollaborateurs(collaborateurs.filter(collab => collab.id !== id));
+
+        // Update pagination if needed
+        if (paginatedCollaborateurs.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
       } catch (err) {
         console.error('Failed to delete collaborateur:', err);
         alert('Impossible de supprimer le collaborateur. Veuillez réessayer plus tard.');
@@ -68,14 +80,29 @@ export default function Page() {
   // Handle document view
   const handleViewDocument = (id: number) => {
     // Navigate to detail view
-    window.location.href = `/collaborateurs/detail/${id}`;
+    window.location.href = `/collaborateurs/document/${id}`;
   };
 
-  // Filtered collaborateurs - now handled by backend for search and status filter
-  const filteredCollaborateurs = useMemo(() => {
-    // This is now mainly for local filtering if needed
-    return collaborateurs;
-  }, [collaborateurs]);
+  // Paginated collaborateurs
+  const paginatedCollaborateurs = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return collaborateurs.slice(startIndex, endIndex);
+  }, [collaborateurs, currentPage, itemsPerPage]);
+
+  // Pagination controls
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // Items per page change
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newItemsPerPage = parseInt(e.target.value);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -129,7 +156,7 @@ export default function Page() {
 
       {/* Results Summary */}
       <div className="mb-4 text-gray-600 dark:text-gray-300">
-        {loading ? 'Chargement des collaborateurs...' : `${filteredCollaborateurs.length} collaborateur(s) trouvé(s)`}
+        {loading ? 'Chargement des collaborateurs...' : `${totalItems} collaborateur(s) trouvé(s)`}
       </div>
 
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
@@ -152,14 +179,14 @@ export default function Page() {
                   Chargement...
                 </TableCell>
               </TableRow>
-            ) : filteredCollaborateurs.length === 0 ? (
+            ) : paginatedCollaborateurs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   Aucun collaborateur trouvé
                 </TableCell>
               </TableRow>
             ) : (
-              filteredCollaborateurs.map((collaborateur) => (
+              paginatedCollaborateurs.map((collaborateur) => (
                 <TableRow key={collaborateur.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors">
                   <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
@@ -222,6 +249,83 @@ export default function Page() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+            <span>Afficher</span>
+            <select
+              value={itemsPerPage}
+              onChange={handleItemsPerPageChange}
+              className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 dark:bg-gray-800"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <span>par page</span>
+          </div>
+
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+              // Calculate page numbers to show centered around current page
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+
+              // Only render if pageNum is valid
+              if (pageNum > 0 && pageNum <= totalPages) {
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`h-8 w-8 p-0 ${
+                      currentPage === pageNum
+                        ? "bg-blue-500 text-white dark:bg-blue-600"
+                        : "dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+                    }`}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              }
+              return null;
+            })}
+
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            Page {currentPage} sur {totalPages}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
