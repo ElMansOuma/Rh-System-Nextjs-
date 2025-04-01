@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
+import InputGroup from '@/components/FormElements/InputGroup';
+import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
+import { Select } from "@/components/FormElements/select";
 
 export default function Page() {
   const router = useRouter();
@@ -23,7 +25,7 @@ export default function Page() {
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -31,13 +33,20 @@ export default function Page() {
     }));
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectChange = (name: string) => (e: ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: e.target.value
+    }));
+  };
+
+  const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setProfilePhoto(e.target.files[0]);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -62,6 +71,39 @@ export default function Page() {
     }
   };
 
+  // Define options for select components
+  const sexeOptions = [
+    { value: 'Homme', label: 'Homme' },
+    { value: 'Femme', label: 'Femme' }
+  ];
+
+  const statutOptions = [
+    { value: 'Actif', label: 'Actif' },
+    { value: 'Inactif', label: 'Inactif' }
+  ];
+
+  const situationFamilialeOptions = [
+    { value: '', label: 'Choisir une situation' },
+    { value: 'Célibataire', label: 'Célibataire' },
+    { value: 'Marié(e)', label: 'Marié(e)' },
+    { value: 'Divorcé(e)', label: 'Divorcé(e)' }
+  ];
+
+  const niveauQualificationOptions = [
+    { value: '', label: 'Choisir un niveau' },
+    { value: 'Bac', label: 'Bac' },
+    { value: 'Licence', label: 'Licence' },
+    { value: 'Master', label: 'Master' },
+    { value: 'Doctorat', label: 'Doctorat' }
+  ];
+
+  const situationEntrepriseOptions = [
+    { value: '', label: 'Choisir une situation' },
+    { value: 'CDI', label: 'CDI' },
+    { value: 'CDD', label: 'CDD' },
+    { value: 'Freelance', label: 'Freelance' }
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Ajouter un Collaborateur</h1>
@@ -73,24 +115,9 @@ export default function Page() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Photo Upload Section */}
+        {/* Photo Upload Section - Modified to make the entire circle clickable */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-          <div className="flex items-center space-x-6">
-            <div className="w-40 h-40 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-              {profilePhoto ? (
-                <Image
-                  src={URL.createObjectURL(profilePhoto)}
-                  alt="Profile"
-                  width={160}
-                  height={160}
-                  className="rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-gray-500 dark:text-gray-400 text-center text-sm">
-                  Glisser & Déposer la photo de profile ou Parcourir
-                </span>
-              )}
-            </div>
+          <div className="flex justify-center">
             <input
               type="file"
               accept="image/*"
@@ -100,86 +127,124 @@ export default function Page() {
             />
             <label
               htmlFor="photoUpload"
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-white"
+              className="w-40 h-40 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center cursor-pointer transition-all hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              Parcourir
+              {profilePhoto ? (
+                <Image
+                  src={URL.createObjectURL(profilePhoto)}
+                  alt="Profile"
+                  width={160}
+                  height={160}
+                  className="rounded-full object-cover"
+                />
+              ) : (
+                <div className="text-gray-500 dark:text-gray-400 text-center text-sm px-4">
+                  <div className="mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                  </div>
+                  Cliquez pour parcourir ou glisser-déposer une photo
+                </div>
+              )}
             </label>
           </div>
         </div>
-
-        {/* Le reste du formulaire reste inchangé, seuls les gestionnaires d'événements ont été modifiés */}
-        {/* ... (conservez les sections existantes du formulaire) ... */}
 
         {/* Personal Base Information */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Informations Personnelles de Base</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
+            <InputGroup
               name="matricule"
               label="Matricule"
-              value={formData.matricule || ''}
-              onChange={handleInputChange}
+              type="text"
+              placeholder="Entrez le matricule"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.matricule || ''}
+              handleChange={handleInputChange}
             />
-            <Input
+            <InputGroup
               name="prenom"
               label="Prénom"
+              type="text"
+              placeholder="Entrez le prénom"
               required
-              value={formData.prenom}
-              onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.prenom}
+              handleChange={handleInputChange}
             />
-            <Input
+            <InputGroup
               name="nom"
               label="Nom"
+              type="text"
+              placeholder="Entrez le nom"
               required
-              value={formData.nom}
-              onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.nom}
+              handleChange={handleInputChange}
             />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Sexe</label>
+            {/* Replace basic select with our custom Select component */}
+            <div className="select-wrapper">
+              <Select
+                label="Sexe"
+                items={sexeOptions}
+                defaultValue={formData.sexe}
+                className="dark:bg-gray-700 dark:text-white"
+              />
+              {/* Hidden select to maintain form state since our component doesn't directly update formData */}
               <select
                 name="sexe"
                 value={formData.sexe}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+                className="hidden"
               >
-                <option value="Homme">Homme</option>
-                <option value="Femme">Femme</option>
+                {sexeOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </div>
 
-            <Input
+            <InputGroup
               name="cin"
               label="CIN"
+              type="text"
+              placeholder="Entrez le CIN"
               required
+              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
               value={formData.cin}
-              onChange={handleInputChange}
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            />
-
-            <Input
-              name="dateNaissance"
-              label="Date de Naissance"
-              type="date"
-              required
-              value={formData.dateNaissance}
-              onChange={handleInputChange}
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              handleChange={handleInputChange}
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Statut</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Date de Naissance</label>
+              <input
+                type="date"
+                name="dateNaissance"
+                value={formData.dateNaissance}
+                onChange={handleInputChange}
+                required
+                className="w-full rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+              />
+            </div>
+
+            <div className="select-wrapper">
+              <Select
+                label="Statut"
+                items={statutOptions}
+                defaultValue={formData.status}
+                className="dark:bg-gray-700 dark:text-white"
+              />
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+                className="hidden"
               >
-                <option value="Actif">Actif</option>
-                <option value="Inactif">Inactif</option>
+                {statutOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -189,28 +254,33 @@ export default function Page() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Coordonnées</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
+            <InputGroup
               name="email"
               label="Email"
               type="email"
+              placeholder="Entrez l'email"
               required
-              value={formData.email}
-              onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.email}
+              handleChange={handleInputChange}
             />
-            <Input
+            <InputGroup
               name="telephone"
               label="Numéro de Téléphone"
-              value={formData.telephone || ''}
-              onChange={handleInputChange}
+              type="text"
+              placeholder="Entrez le numéro de téléphone"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.telephone || ''}
+              handleChange={handleInputChange}
             />
-            <Input
+            <InputGroup
               name="electionDomicile"
               label="Election de Domicile"
-              value={formData.electionDomicile || ''}
-              onChange={handleInputChange}
+              type="text"
+              placeholder="Entrez l'élection de domicile"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.electionDomicile || ''}
+              handleChange={handleInputChange}
             />
           </div>
         </div>
@@ -219,34 +289,42 @@ export default function Page() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Situation Familiale</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation Familiale</label>
+            <div className="select-wrapper">
+              <Select
+                label="Situation Familiale"
+                items={situationFamilialeOptions}
+                defaultValue={formData.situationFamiliale || ''}
+                placeholder="Choisir une situation"
+                className="dark:bg-gray-700 dark:text-white"
+              />
               <select
                 name="situationFamiliale"
                 value={formData.situationFamiliale || ''}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+                className="hidden"
               >
-                <option value="">Choisir une situation</option>
-                <option value="Célibataire">Célibataire</option>
-                <option value="Marié(e)">Marié(e)</option>
-                <option value="Divorcé(e)">Divorcé(e)</option>
+                {situationFamilialeOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </div>
-            <Input
+            <InputGroup
               name="nombrePersonnesACharge"
               label="Nombre de Personnes à Charge (Enfants)"
               type="number"
-              value={formData.nombrePersonnesACharge?.toString() || ''}
-              onChange={handleInputChange}
+              placeholder="Entrez le nombre"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.nombrePersonnesACharge?.toString() || ''}
+              handleChange={handleInputChange}
             />
-            <Input
+            <InputGroup
               name="cnss"
               label="CNSS"
-              value={formData.cnss || ''}
-              onChange={handleInputChange}
+              type="text"
+              placeholder="Entrez le numéro CNSS"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.cnss || ''}
+              handleChange={handleInputChange}
             />
           </div>
         </div>
@@ -255,82 +333,95 @@ export default function Page() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Détails Professionnels</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
+            <InputGroup
               name="nombreAnneeExperience"
               label="Nombre d'Années d'Expérience"
               type="number"
-              value={formData.nombreAnneeExperience?.toString() || ''}
-              onChange={handleInputChange}
+              placeholder="Entrez le nombre d'années"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.nombreAnneeExperience?.toString() || ''}
+              handleChange={handleInputChange}
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Niveau de Qualification ou Diplôme Obtenu</label>
+            <div className="select-wrapper">
+              <Select
+                label="Niveau de Qualification ou Diplôme Obtenu"
+                items={niveauQualificationOptions}
+                defaultValue={formData.niveauQualification || ''}
+                placeholder="Choisir un niveau"
+                className="dark:bg-gray-700 dark:text-white"
+              />
               <select
                 name="niveauQualification"
                 value={formData.niveauQualification || ''}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+                className="hidden"
               >
-                <option value="">Choisir un niveau</option>
-                <option value="Bac">Bac</option>
-                <option value="Licence">Licence</option>
-                <option value="Master">Master</option>
-                <option value="Doctorat">Doctorat</option>
+                {niveauQualificationOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </div>
-            <Input
+            <InputGroup
               name="titrePosteOccupe"
               label="Titre du Poste Occupé"
-              value={formData.titrePosteOccupe || ''}
-              onChange={handleInputChange}
+              type="text"
+              placeholder="Entrez le titre du poste"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.titrePosteOccupe || ''}
+              handleChange={handleInputChange}
             />
 
-            <Input
+            <InputGroup
               name="rib"
               label="RIB"
-              value={formData.rib || ''}
-              onChange={handleInputChange}
+              type="text"
+              placeholder="Entrez le RIB"
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.rib || ''}
+              handleChange={handleInputChange}
             />
 
-            <div>
-<<<<<<< HEAD
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation dans l'Entreprise</label>
-=======
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation dans l{"'"}Entreprise</label>
->>>>>>> cf0ce64 (Initial commit)
+            <div className="select-wrapper">
+              <Select
+                label="Situation dans l'Entreprise"
+                items={situationEntrepriseOptions}
+                defaultValue={formData.situationEntreprise || ''}
+                placeholder="Choisir une situation"
+                className="dark:bg-gray-700 dark:text-white"
+              />
               <select
                 name="situationEntreprise"
                 value={formData.situationEntreprise || ''}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+                className="hidden"
               >
-                <option value="">Choisir une situation</option>
-                <option value="CDI">CDI</option>
-                <option value="CDD">CDD</option>
-                <option value="Freelance">Freelance</option>
+                {situationEntrepriseOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </div>
 
-            <Input
-              name="dateEmbauche"
-              label="Date d'Embauche"
-              type="date"
-              value={formData.dateEmbauche || ''}
-              onChange={handleInputChange}
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Date d{"'"}Embauche</label>
+              <input
+                type="date"
+                name="dateEmbauche"
+                value={formData.dateEmbauche || ''}
+                onChange={handleInputChange}
+                className="w-full rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+              />
+            </div>
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tâches Accomplies</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Tâches Accomplies</label>
             <textarea
               name="tachesAccomplies"
               value={formData.tachesAccomplies || ''}
               onChange={handleInputChange}
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+              placeholder="Décrivez les tâches accomplies"
+              className="w-full rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
             />
           </div>
         </div>
@@ -338,7 +429,6 @@ export default function Page() {
         {/* Submit Button */}
         <div className="flex justify-end">
           <Button
-            type="submit"
             disabled={isSubmitting}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-600"
           >

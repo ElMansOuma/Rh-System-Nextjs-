@@ -22,11 +22,7 @@ export const NAV_DATA = [
     items: [
 
       {
-<<<<<<< HEAD
         title: "Tableau de bord",
-=======
-        title: "Dashboard",
->>>>>>> cf0ce64 (Initial commit)
         icon: HomeIcon,
         items: [
           {
@@ -49,21 +45,13 @@ export const NAV_DATA = [
         icon: UserIcon,
         items: [
           {
-<<<<<<< HEAD
             title: "Liste des Collaborateurs",
-=======
-            title: "Liste Collaborateurs",
->>>>>>> cf0ce64 (Initial commit)
             url: "/collaborateurs",
           },
         ],
       },
       {
-<<<<<<< HEAD
         title: "Gestion du Temps",
-=======
-        title: "Gestion Temps",
->>>>>>> cf0ce64 (Initial commit)
         url: "/gestion-temps",
         icon: CalendarIcon,
         items: [
