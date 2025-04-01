@@ -295,7 +295,11 @@ export default function Page() {
             />
 
             <div>
+<<<<<<< HEAD
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation dans l'Entreprise</label>
+=======
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation dans l{"'"}Entreprise</label>
+>>>>>>> cf0ce64 (Initial commit)
               <select
                 name="situationEntreprise"
                 value={formData.situationEntreprise || ''}

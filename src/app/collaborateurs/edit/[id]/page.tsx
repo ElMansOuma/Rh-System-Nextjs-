@@ -108,7 +108,11 @@ export default function EditCollaborateurPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+<<<<<<< HEAD
         <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Modification d'un Collaborateur</h1>
+=======
+        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Modification d{"'"}un Collaborateur</h1>
+>>>>>>> cf0ce64 (Initial commit)
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 flex justify-center items-center">
           <p className="text-gray-700 dark:text-gray-300">Chargement des données...</p>
         </div>
@@ -350,7 +354,11 @@ export default function EditCollaborateurPage() {
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Détails Professionnels</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
+<<<<<<< HEAD
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre d'Années d'Expérience</label>
+=======
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre d{"'"}Années d{"'"}Expérience</label>
+>>>>>>> cf0ce64 (Initial commit)
               <input
                 type="number"
                 name="nombreAnneeExperience"
@@ -399,7 +407,11 @@ export default function EditCollaborateurPage() {
             </div>
 
             <div>
+<<<<<<< HEAD
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation dans l'Entreprise</label>
+=======
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Situation dans l{"'"}Entreprise</label>
+>>>>>>> cf0ce64 (Initial commit)
               <select
                 name="situationEntreprise"
                 value={formData.situationEntreprise || ''}
@@ -412,9 +424,14 @@ export default function EditCollaborateurPage() {
                 <option value="Freelance">Freelance</option>
               </select>
             </div>
+<<<<<<< HEAD
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date d'Embauche</label>
+=======
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date d{"'"}Embauche</label>
+>>>>>>> cf0ce64 (Initial commit)
               <input
                 type="date"
                 name="dateEmbauche"
