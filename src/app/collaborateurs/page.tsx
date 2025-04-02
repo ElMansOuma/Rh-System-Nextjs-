@@ -52,7 +52,6 @@ export default function CollaborateursPage() {
         setLoading(false);
       }
     };
-
     fetchCollaborateurs();
   }, [searchTerm, statusFilter]);
 
@@ -110,14 +109,12 @@ export default function CollaborateursPage() {
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Liste des Collaborateurs</h1>
-        <Link href="/collaborateurs/add">
-          <Button
-            className="flex items-center gap-2 rounded-full bg-blue-400 hover:bg-blue-300 text-white px-4 py-2"
-          >
-            <UserPlus className="w-5 h-5" />
-            Ajouter un Collaborateur
-          </Button>
+        <h1 className="text-2xl font-bold">Liste des Collaborateurs</h1>
+        <Link
+          href="/collaborateurs/add"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Ajouter un Collaborateur
         </Link>
       </div>
 

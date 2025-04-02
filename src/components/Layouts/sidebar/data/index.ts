@@ -37,6 +37,13 @@ export const NAV_DATA = [
         ],
       },
       {
+        title: "Contrats",
+        url: "/contrats",
+        icon: TableIcon,
+        items: [
+        ],
+      },
+      {
         title: "Gestion Temps",
         url: "/gestion-temps",
         icon: CalendarIcon,
@@ -62,17 +69,6 @@ export const NAV_DATA = [
           {
             title: "Historique des Congés",
             url: "/conges/historique",
-          },
-        ],
-      },
-      {
-        title: "Contrats",
-        url: "/contrats",
-        icon: TableIcon,
-        items: [
-          {
-            title: "Liste des Contrats",
-            url: "/contrats/liste",
           },
         ],
       },
