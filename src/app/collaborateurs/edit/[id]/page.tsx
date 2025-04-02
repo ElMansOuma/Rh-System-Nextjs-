@@ -45,13 +45,20 @@ export default function EditCollaborateurPage() {
           data.dateEmbauche = data.dateEmbauche.split('T')[0];
         }
 
-        setFormData(data);
+        // Assurez-vous que toutes les valeurs sont définies pour éviter des problèmes avec les composants contrôlés
+        setFormData({
+          ...data,
+          situationFamiliale: data.situationFamiliale || '',
+          niveauQualification: data.niveauQualification || '',
+          situationEntreprise: data.situationEntreprise || ''
+        });
 
         // Définir l'URL de la photo actuelle
         if (data.id) {
           setCurrentPhotoUrl(`http://localhost:8080/api/collaborateurs/${data.id}/photo`);
         }
 
+        console.log("Données chargées:", data); // Log pour débogage
         setErrorMessage(null);
       } catch (error) {
         console.error('Erreur lors du chargement du collaborateur:', error);
@@ -68,16 +75,22 @@ export default function EditCollaborateurPage() {
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    if (name === 'situationFamiliale') {
+      console.log(`Situation Familiale changed to: ${value}`);
+    }
+    console.log(`Changement de champ: ${name} = ${value}`);
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  const handleSelectChange = (name: string) => (e: ChangeEvent<HTMLSelectElement>) => {
+  // Fonction mise à jour pour gérer directement les changements des Select personnalisés
+  const handleSelectChange = (name: string, value: string) => {
+    console.log(`Select personnalisé modifié: ${name} = ${value}`); // Log pour débogage
     setFormData(prev => ({
       ...prev,
-      [name]: e.target.value
+      [name]: value
     }));
   };
 
@@ -93,11 +106,15 @@ export default function EditCollaborateurPage() {
     setErrorMessage(null);
 
     try {
+      console.log("situationFamiliale à envoyer:", formData.situationFamiliale);
+
       // Préparer les données à envoyer
       const collaborateurData: Collaborateur = {
         ...formData,
         photo: profilePhoto
       };
+
+      console.log("Données à envoyer:", collaborateurData); // Log pour débogage
 
       // Envoyer les données au serveur
       await collaborateurService.update(id, collaborateurData);
@@ -249,19 +266,14 @@ export default function EditCollaborateurPage() {
               handleChange={handleInputChange}
             />
 
-            {/* Select component for Sexe */}
-            <div className="select-wrapper">
-              <Select
-                label="Sexe"
-                items={sexeOptions}
-                defaultValue={formData.sexe}
-                className="dark:bg-gray-700 dark:text-white"
-              />
+            {/* Select component for Sexe - Modifié pour utiliser onChange */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sexe</label>
               <select
                 name="sexe"
                 value={formData.sexe}
                 onChange={handleInputChange}
-                className="hidden"
+                className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-gray-700 dark:text-white"
               >
                 {sexeOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -292,18 +304,14 @@ export default function EditCollaborateurPage() {
               />
             </div>
 
-            <div className="select-wrapper">
-              <Select
-                label="Statut"
-                items={statutOptions}
-                defaultValue={formData.status}
-                className="dark:bg-gray-700 dark:text-white"
-              />
+            {/* Select component for Status - Modifié pour utiliser onChange */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Statut</label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className="hidden"
+                className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-gray-700 dark:text-white"
               >
                 {statutOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -352,25 +360,21 @@ export default function EditCollaborateurPage() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Situation Familiale</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="select-wrapper">
-              <Select
-                label="Situation Familiale"
-                items={situationFamilialeOptions}
-                defaultValue={formData.situationFamiliale || ''}
-                placeholder="Choisir une situation"
-                className="dark:bg-gray-700 dark:text-white"
-              />
+            {/* Select component for Situation Familiale - Modifié pour utiliser onChange */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Situation Familiale</label>
               <select
                 name="situationFamiliale"
                 value={formData.situationFamiliale || ''}
                 onChange={handleInputChange}
-                className="hidden"
+                className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-gray-700 dark:text-white"
               >
                 {situationFamilialeOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
             </div>
+
             <InputGroup
               name="nombrePersonnesACharge"
               label="Nombre de Personnes à Charge (Enfants)"
@@ -405,25 +409,22 @@ export default function EditCollaborateurPage() {
               value={formData.nombreAnneeExperience?.toString() || ''}
               handleChange={handleInputChange}
             />
-            <div className="select-wrapper">
-              <Select
-                label="Niveau de Qualification ou Diplôme Obtenu"
-                items={niveauQualificationOptions}
-                defaultValue={formData.niveauQualification || ''}
-                placeholder="Choisir un niveau"
-                className="dark:bg-gray-700 dark:text-white"
-              />
+
+            {/* Select component for Niveau de Qualification - Modifié pour utiliser onChange */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Niveau de Qualification ou Diplôme Obtenu</label>
               <select
                 name="niveauQualification"
                 value={formData.niveauQualification || ''}
                 onChange={handleInputChange}
-                className="hidden"
+                className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-gray-700 dark:text-white"
               >
                 {niveauQualificationOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
             </div>
+
             <InputGroup
               name="titrePosteOccupe"
               label="Titre du Poste Occupé"
@@ -444,19 +445,14 @@ export default function EditCollaborateurPage() {
               handleChange={handleInputChange}
             />
 
-            <div className="select-wrapper">
-              <Select
-                label="Situation dans l'Entreprise"
-                items={situationEntrepriseOptions}
-                defaultValue={formData.situationEntreprise || ''}
-                placeholder="Choisir une situation"
-                className="dark:bg-gray-700 dark:text-white"
-              />
+            {/* Select component for Situation Entreprise - Modifié pour utiliser onChange */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Situation dans l'Entreprise</label>
               <select
                 name="situationEntreprise"
                 value={formData.situationEntreprise || ''}
                 onChange={handleInputChange}
-                className="hidden"
+                className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-gray-700 dark:text-white"
               >
                 {situationEntrepriseOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -488,8 +484,8 @@ export default function EditCollaborateurPage() {
             />
           </div>
         </div>
-
         {/* Submit Button */}
+
         <div className="flex justify-end space-x-4">
           <Button
             type="button"

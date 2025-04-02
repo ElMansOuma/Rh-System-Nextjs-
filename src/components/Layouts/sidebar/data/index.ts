@@ -24,19 +24,9 @@ export const NAV_DATA = [
       {
         title: "Tableau de bord",
         icon: HomeIcon,
+        url: "/",
         items: [
-          {
-            title: "Congé",
-            url: "/dashboard/conge",
-          },
-          {
-            title: "Pointage",
-            url: "/dashboard/pointage",
-          },
-          {
-            title: "Contrat",
-            url: "/dashboard/contrat",
-          },
+
         ],
       },
       {
@@ -44,14 +34,10 @@ export const NAV_DATA = [
         url: "/collaborateurs",
         icon: UserIcon,
         items: [
-          {
-            title: "Liste des Collaborateurs",
-            url: "/collaborateurs",
-          },
         ],
       },
       {
-        title: "Gestion du Temps",
+        title: "Gestion Temps",
         url: "/gestion-temps",
         icon: CalendarIcon,
         items: [

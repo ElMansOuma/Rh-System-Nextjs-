@@ -565,30 +565,32 @@ export default function CollaborateurDetailPage() {
                   </TableCell>
                   <TableCell className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
-                        className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-blue-900 dark:hover:text-blue-300"
+                      {/* View button - no border */}
+                      <button
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
                         title="Visualiser"
                         onClick={() => handleViewDocument(document.id)}
                       >
                         <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-8 w-8 p-0 text-green-600 hover:bg-green-50 dark:bg-gray-700 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-300"
+                      </button>
+
+                      {/* Download button - no border */}
+                      <button
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-green-600 hover:text-green-800 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/30"
                         title="Télécharger"
                         onClick={() => handleDownloadDocument(document.id)}
                       >
                         <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-red-300"
-                        onClick={() => handleDeleteDocument(document.id)}
+                      </button>
+
+                      {/* Delete button - no border */}
+                      <button
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                         title="Supprimer"
+                        onClick={() => handleDeleteDocument(document.id)}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </button>
                     </div>
                   </TableCell>
                 </TableRow>
