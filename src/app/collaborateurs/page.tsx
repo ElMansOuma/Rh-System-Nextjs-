@@ -164,15 +164,15 @@ export default function CollaborateursPage() {
         </div>
       </div>
 
-      {/* Top Pagination Controls - Using select instead of buttons */}
+      {/* Top Pagination Controls - Elegant borderless design with correct variant types */}
       {!loading && totalPages > 0 && (
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-t-lg border border-gray-200 dark:border-gray-700 mb-0 flex flex-wrap justify-between items-center">
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+        <div className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 p-4 rounded-t-lg shadow-sm mb-0 flex flex-wrap justify-between items-center">
+          <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-300">
             <span className="font-medium">Afficher</span>
             <select
               value={itemsPerPage}
               onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-              className="px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              className="px-2 py-1 rounded-md shadow-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white transition-colors"
             >
               {itemsPerPageOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -181,52 +181,53 @@ export default function CollaborateursPage() {
             <span>collaborateurs par page</span>
           </div>
 
-          <div className="flex items-center space-x-3 mt-2 sm:mt-0">
+          <div className="flex items-center space-x-2 mt-2 sm:mt-0">
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(1)}
               disabled={currentPage === 1}
-              className="h-8 px-2 py-0 text-xs dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+              className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               Première
             </Button>
 
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="h-8 w-8 p-0 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-md">
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Page <span className="font-bold">{currentPage}</span> sur <span className="font-bold">{totalPages}</span>
-              </span>
+            <div className="bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">
+        <span className="text-sm text-blue-600 dark:text-blue-300">
+          <span className="font-bold">{currentPage}</span>
+          <span className="mx-1 opacity-70">/</span>
+          <span>{totalPages}</span>
+        </span>
             </div>
 
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="h-8 w-8 p-0 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
 
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(totalPages)}
               disabled={currentPage === totalPages}
-              className="h-8 px-2 py-0 text-xs dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+              className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               Dernière
             </Button>
           </div>
         </div>
       )}
-
       <div className={`bg-white dark:bg-gray-800 shadow-md ${!loading && totalPages > 0 ? 'rounded-b-lg' : 'rounded-lg'} overflow-hidden`}>
         <Table>
           <TableHeader className="bg-gray-50 dark:bg-gray-700">
