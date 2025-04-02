@@ -60,14 +60,14 @@ const documentService = {
       });
 
       // Récupérer les métadonnées du document pour obtenir le nom du fichier
-      const document = await documentService.getDocument(id);
+      const docInfo = await documentService.getDocument(id);
 
       // Créer un URL temporaire pour le téléchargement
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = url;
-      link.setAttribute('download', document.name);
-      document.body.appendChild(link);
+      link.setAttribute('download', docInfo.name);
+      window.document.body.appendChild(link);
       link.click();
 
       // Nettoyage
@@ -83,12 +83,29 @@ const documentService = {
 
   viewDocument: async (id: number) => {
     try {
+      // Récupérer les métadonnées du document pour déterminer le type
+      const docInfo = await documentService.getDocument(id);
       const response = await axios.get(`${API_URL}/${id}/view`, {
         responseType: 'blob'
       });
 
-      // Créer un URL pour l'affichage du document
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Déterminer le type MIME approprié
+      let mimeType = 'application/octet-stream'; // Type par défaut
+      const fileName = docInfo.name.toLowerCase();
+
+      if (fileName.endsWith('.pdf')) {
+        mimeType = 'application/pdf';
+      } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+        mimeType = 'application/msword';
+      } else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+        mimeType = 'image/jpeg';
+      } else if (fileName.endsWith('.png')) {
+        mimeType = 'image/png';
+      }
+
+      // Créer un URL pour l'affichage du document avec le bon type MIME
+      const blob = new Blob([response.data], { type: mimeType });
+      const url = window.URL.createObjectURL(blob);
 
       // Ouvrir dans un nouvel onglet
       window.open(url, '_blank');

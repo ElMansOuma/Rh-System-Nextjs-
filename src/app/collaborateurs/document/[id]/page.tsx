@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import collaborateurService from '@/services/collaborateurService';
 import documentService, { Document } from '@/services/documentService';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -416,10 +415,7 @@ export default function CollaborateurDetailPage() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Situation dans l{"'"}Entreprise</p>
                 <p className="font-medium text-gray-900 dark:text-white">{collaborateur.situationEntreprise || '-'}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Date d{"'"}Embauche</p>
-                <p className="font-medium text-gray-900 dark:text-white">{formatDate(collaborateur.dateEmbauche)}</p>
-              </div>
+
             </div>
 
             {collaborateur.tachesAccomplies && (

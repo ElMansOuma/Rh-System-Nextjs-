@@ -20,6 +20,9 @@ export default function Page() {
     dateNaissance: '',
     status: 'Actif',
     email: '',
+    situationFamiliale: '',
+    niveauQualification: '',
+    situationEntreprise: '',
   });
 
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
@@ -30,13 +33,6 @@ export default function Page() {
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));
-  };
-
-  const handleSelectChange = (name: string) => (e: ChangeEvent<HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: e.target.value
     }));
   };
 
@@ -85,7 +81,7 @@ export default function Page() {
   const situationFamilialeOptions = [
     { value: '', label: 'Choisir une situation' },
     { value: 'Célibataire', label: 'Célibataire' },
-    { value: 'Marié(e)', label: 'Marié(e)' },
+    { value: 'Marié', label: 'Marié' },
     { value: 'Divorcé(e)', label: 'Divorcé(e)' }
   ];
 
@@ -115,7 +111,7 @@ export default function Page() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Photo Upload Section - Modified to make the entire circle clickable */}
+        {/* Photo Upload Section */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="flex justify-center">
             <input
@@ -185,26 +181,15 @@ export default function Page() {
               handleChange={handleInputChange}
             />
 
-            {/* Replace basic select with our custom Select component */}
-            <div className="select-wrapper">
-              <Select
-                label="Sexe"
-                items={sexeOptions}
-                defaultValue={formData.sexe}
-                className="dark:bg-gray-700 dark:text-white"
-              />
-              {/* Hidden select to maintain form state since our component doesn't directly update formData */}
-              <select
-                name="sexe"
-                value={formData.sexe}
-                onChange={handleInputChange}
-                className="hidden"
-              >
-                {sexeOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
+            {/* Use updated Select component with proper value/onChange */}
+            <Select
+              label="Sexe"
+              name="sexe"
+              items={sexeOptions}
+              value={formData.sexe}
+              onChange={handleInputChange}
+              className="dark:bg-gray-700 dark:text-white"
+            />
 
             <InputGroup
               name="cin"
@@ -229,24 +214,14 @@ export default function Page() {
               />
             </div>
 
-            <div className="select-wrapper">
-              <Select
-                label="Statut"
-                items={statutOptions}
-                defaultValue={formData.status}
-                className="dark:bg-gray-700 dark:text-white"
-              />
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="hidden"
-              >
-                {statutOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Statut"
+              name="status"
+              items={statutOptions}
+              value={formData.status}
+              onChange={handleInputChange}
+              className="dark:bg-gray-700 dark:text-white"
+            />
           </div>
         </div>
 
@@ -289,25 +264,15 @@ export default function Page() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Situation Familiale</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="select-wrapper">
-              <Select
-                label="Situation Familiale"
-                items={situationFamilialeOptions}
-                defaultValue={formData.situationFamiliale || ''}
-                placeholder="Choisir une situation"
-                className="dark:bg-gray-700 dark:text-white"
-              />
-              <select
-                name="situationFamiliale"
-                value={formData.situationFamiliale || ''}
-                onChange={handleInputChange}
-                className="hidden"
-              >
-                {situationFamilialeOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Situation Familiale"
+              name="situationFamiliale"
+              items={situationFamilialeOptions}
+              value={formData.situationFamiliale || ''}
+              placeholder="Choisir une situation"
+              onChange={handleInputChange}
+              className="dark:bg-gray-700 dark:text-white"
+            />
             <InputGroup
               name="nombrePersonnesACharge"
               label="Nombre de Personnes à Charge (Enfants)"
@@ -342,25 +307,15 @@ export default function Page() {
               value={formData.nombreAnneeExperience?.toString() || ''}
               handleChange={handleInputChange}
             />
-            <div className="select-wrapper">
-              <Select
-                label="Niveau de Qualification ou Diplôme Obtenu"
-                items={niveauQualificationOptions}
-                defaultValue={formData.niveauQualification || ''}
-                placeholder="Choisir un niveau"
-                className="dark:bg-gray-700 dark:text-white"
-              />
-              <select
-                name="niveauQualification"
-                value={formData.niveauQualification || ''}
-                onChange={handleInputChange}
-                className="hidden"
-              >
-                {niveauQualificationOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Niveau de Qualification ou Diplôme Obtenu"
+              name="niveauQualification"
+              items={niveauQualificationOptions}
+              value={formData.niveauQualification || ''}
+              placeholder="Choisir un niveau"
+              onChange={handleInputChange}
+              className="dark:bg-gray-700 dark:text-white"
+            />
             <InputGroup
               name="titrePosteOccupe"
               label="Titre du Poste Occupé"
@@ -381,54 +336,41 @@ export default function Page() {
               handleChange={handleInputChange}
             />
 
-            <div className="select-wrapper">
-              <Select
-                label="Situation dans l'Entreprise"
-                items={situationEntrepriseOptions}
-                defaultValue={formData.situationEntreprise || ''}
-                placeholder="Choisir une situation"
-                className="dark:bg-gray-700 dark:text-white"
-              />
-              <select
-                name="situationEntreprise"
-                value={formData.situationEntreprise || ''}
-                onChange={handleInputChange}
-                className="hidden"
-              >
-                {situationEntrepriseOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Date d{"'"}Embauche</label>
-              <input
-                type="date"
-                name="dateEmbauche"
-                value={formData.dateEmbauche || ''}
-                onChange={handleInputChange}
-                className="w-full rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
-              />
-            </div>
+            <Select
+              label="Situation dans l'Entreprise"
+              name="situationEntreprise"
+              items={situationEntrepriseOptions}
+              value={formData.situationEntreprise || ''}
+              placeholder="Choisir une situation"
+              onChange={handleInputChange}
+              className="dark:bg-gray-700 dark:text-white"
+            />
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Tâches Accomplies</label>
-            <textarea
+            <TextAreaGroup
               name="tachesAccomplies"
-              value={formData.tachesAccomplies || ''}
-              onChange={handleInputChange}
-              rows={4}
+              label="Tâches Accomplies"
               placeholder="Décrivez les tâches accomplies"
-              className="w-full rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+              rows={4}
+              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              value={formData.tachesAccomplies || ''}
+              handleChange={handleInputChange}
             />
           </div>
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end space-x-4">
           <Button
+            type="button"
+            onClick={() => router.push('/collaborateurs')}
+            className="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
             disabled={isSubmitting}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-600"
           >
