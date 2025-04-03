@@ -327,27 +327,6 @@ export default function CollaborateurDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Fil d'Ariane */}
-<<<<<<< HEAD
-      <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
-
-        <Button
-          variant="outline"
-          onClick={() => router.push('/collaborateurs')}
-          className="mr-4 text-gray-600 dark:text-gray-300"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-        </Button>
-
-      </nav>
-
-      <div className="flex items-center mb-6">
-        <h1 className="text-1xl font-bold text-gray-800 dark:text-white">
-          Dossier Collaborateur
-          {collaborateur && ` : ${collaborateur.prenom} ${collaborateur.nom}`}
-        </h1>
-      </div>
-
-=======
 
       <div className="flex items-center mb-6">
         <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
@@ -365,7 +344,6 @@ export default function CollaborateurDetailPage() {
           </h1>
         </nav>
       </div>
->>>>>>> 2431bae (contrat frontend)
       {errorMessage && (
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md shadow-sm animate-fadeIn">
           <div className="flex items-center">
