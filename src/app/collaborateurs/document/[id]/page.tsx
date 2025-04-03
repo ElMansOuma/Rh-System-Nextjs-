@@ -14,9 +14,27 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Upload, File, FileText, ArrowLeft, Trash2, Eye, Download, User, Briefcase, Phone, Mail, Calendar, CreditCard, Hash, Search } from 'lucide-react';
+import {
+  Upload,
+  File,
+  FileText,
+  ArrowLeft,
+  Trash2,
+  Eye,
+  Download,
+  User,
+  Briefcase,
+  Phone,
+  Mail,
+  Calendar,
+  CreditCard,
+  Hash,
+  Search,
+  Home,
+  Users
+} from 'lucide-react';
 
-// Composant Select pour le téléchargement de documents
+// Composant Select amélioré
 const Select: React.FC<{
   label: string;
   value: string;
@@ -39,10 +57,51 @@ const Select: React.FC<{
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full border border-gray-300 dark:border-gray-600 rounded-md h-10 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg h-10 px-3
+                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
       >
         {children}
       </select>
+    </div>
+  );
+};
+
+// Composant pour les cartes d'information
+const InfoCard: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ title, icon, children, className = "" }) => {
+  return (
+    <div className={`bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 mb-6 transition-all duration-200 hover:shadow-lg ${className}`}>
+      <h2 className="text-lg font-semibold mb-5 text-gray-800 dark:text-white flex items-center pb-3 border-b border-gray-100 dark:border-gray-700">
+        {icon}
+        <span className="ml-2">{title}</span>
+      </h2>
+      <div className="mt-4">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Composant pour les champs d'information
+const InfoField: React.FC<{
+  label: string;
+  value: string | number | undefined;
+  icon?: React.ReactNode;
+}> = ({ label, value, icon }) => {
+  return (
+    <div className="mb-3">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center">
+        {icon && <span className="mr-2">{icon}</span>}
+        {label}
+      </p>
+      <p className="font-medium text-gray-900 dark:text-white">
+        {value || '-'}
+      </p>
     </div>
   );
 };
@@ -247,8 +306,17 @@ export default function CollaborateurDetailPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Détails du Collaborateur</h1>
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 flex justify-center items-center">
+        <div className="flex items-center mb-6">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/collaborateurs')}
+            className="mr-4 text-gray-600 dark:text-gray-300"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Détails du Collaborateur</h1>
+        </div>
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 flex justify-center items-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           <p className="ml-4 text-gray-700 dark:text-gray-300">Chargement des données...</p>
         </div>
@@ -258,7 +326,9 @@ export default function CollaborateurDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div className="flex items-center mb-6">
+      {/* Fil d'Ariane */}
+      <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+
         <Button
           variant="outline"
           onClick={() => router.push('/collaborateurs')}
@@ -267,176 +337,183 @@ export default function CollaborateurDetailPage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+      </nav>
+
+      <div className="flex items-center mb-6">
+        <h1 className="text-1xl font-bold text-gray-800 dark:text-white">
           Dossier Collaborateur
           {collaborateur && ` : ${collaborateur.prenom} ${collaborateur.nom}`}
         </h1>
       </div>
 
       {errorMessage && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {errorMessage}
+        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md shadow-sm animate-fadeIn">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{errorMessage}</p>
+            </div>
+          </div>
         </div>
       )}
 
       {successMessage && (
-        <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-          {successMessage}
+        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-md shadow-sm animate-fadeIn">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{successMessage}</p>
+            </div>
+          </div>
         </div>
       )}
-
 
       {/* Informations du collaborateur */}
       {collaborateur && (
         <>
-          {/* Photo de profil */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-            <div className="flex justify-center">
-              {currentPhotoUrl ? (
-                <img
-                  src={currentPhotoUrl}
-                  alt={`${collaborateur.prenom} ${collaborateur.nom}`}
-                  className="w-40 h-40 rounded-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-profile.png'; // Image de secours
-                  }}
-                />
-              ) : (
-                <div className="w-40 h-40 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                  <User size={60} className="text-gray-500" />
-                </div>
-              )}
-            </div>
-          </div>
+          {/* En-tête de profil avec photo et informations de base */}
+          <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 mb-6 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300">
+            <div className="flex flex-col md:flex-row gap-8">
+              {/* Photo de profil à gauche */}
+              <div className="flex-shrink-0 flex justify-center">
+                <div className="relative w-40 h-40">
+                  {currentPhotoUrl ? (
+                    <img
+                      src={currentPhotoUrl}
+                      alt={`${collaborateur.prenom} ${collaborateur.nom}`}
+                      className="w-40 h-40 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-md transition-transform duration-300 hover:scale-105"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder-profile.png'; // Image de secours
+                      }}
+                    />
+                  ) : (
+                    <div className="w-40 h-40 bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center border-4 border-white dark:border-gray-700 shadow-md">
+                      <User size={60} className="text-blue-500 dark:text-blue-400" />
+                    </div>
+                  )}
 
-          {/* Informations personnelles de base */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Informations Personnelles de Base</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Matricule</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.matricule || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Prénom</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.prenom}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nom</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.nom}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Sexe</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.sexe}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">CIN</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.cin}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Date de Naissance</p>
-                <p className="font-medium text-gray-900 dark:text-white">{formatDate(collaborateur.dateNaissance)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Statut</p>
-                <p className="font-medium">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
+                  {/* Badge de statut */}
+                  <div className={`absolute bottom-2 right-2 px-3 py-1 rounded-full text-xs font-medium shadow-md ${
                     collaborateur.status === 'Actif'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100 border border-green-200 dark:border-green-600'
+                      : 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100 border border-red-200 dark:border-red-600'
                   }`}>
                     {collaborateur.status}
-                  </span>
-                </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informations personnelles essentielles à droite */}
+              <div className="flex-grow md:mt-0 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                  {collaborateur.matricule && (
+                    <span className="text-sm px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-100 rounded-full flex items-center w-fit shadow-sm border border-blue-100 dark:border-blue-800">
+                      <Hash className="w-3 h-3 mr-1" /> {collaborateur.matricule}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 mt-4">
+                  <div className="flex items-center text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                    <Briefcase className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400" />
+                    <span className="font-medium">{collaborateur.titrePosteOccupe || 'Poste non spécifié'}</span>
+                  </div>
+
+                  <div className="flex items-center text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                    <Phone className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400" />
+                    <span>{collaborateur.telephone || 'Téléphone non spécifié'}</span>
+                  </div>
+
+                  <div className="flex items-center text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                    <Mail className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400" />
+                    <span>{collaborateur.email || 'Email non spécifié'}</span>
+                  </div>
+
+                  <div className="flex items-center text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                    <Calendar className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400" />
+                    <span>{formatDate(collaborateur.dateNaissance) || 'Date de naissance non spécifiée'}</span>
+                  </div>
+
+                  <div className="flex items-center text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                    <CreditCard className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400" />
+                    <span>{collaborateur.cin || 'CIN non spécifié'}</span>
+                  </div>
+
+                  <div className="flex items-center text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                    <User className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400" />
+                    <span>{collaborateur.sexe || 'Sexe non spécifié'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Coordonnées */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Coordonnées</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Email</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Numéro de Téléphone</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.telephone || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Election de Domicile</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.electionDomicile || '-'}</p>
-              </div>
+          <InfoCard
+            title="Coordonnées"
+            icon={<Mail className="w-5 h-5 text-blue-500 dark:text-blue-400" />}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <InfoField label="Email" value={collaborateur.email} />
+              <InfoField label="Numéro de Téléphone" value={collaborateur.telephone} />
+              <InfoField label="Élection de Domicile" value={collaborateur.electionDomicile} />
             </div>
-          </div>
+          </InfoCard>
 
           {/* Situation Familiale */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Situation Familiale</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Situation Familiale</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.situationFamiliale || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nombre de Personnes à Charge (Enfants)</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.nombrePersonnesACharge || '0'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">CNSS</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.cnss || '-'}</p>
-              </div>
+          <InfoCard
+            title="Situation Familiale"
+            icon={<User className="w-5 h-5 text-blue-500 dark:text-blue-400" />}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <InfoField label="Situation Familiale" value={collaborateur.situationFamiliale} />
+              <InfoField label="Nombre de Personnes à Charge (Enfants)" value={collaborateur.nombrePersonnesACharge || '0'} />
+              <InfoField label="CNSS" value={collaborateur.cnss} />
             </div>
-          </div>
+          </InfoCard>
 
           {/* Détails Professionnels */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Détails Professionnels</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nombre d{"'"}Années d{"'"}Expérience</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.nombreAnneeExperience || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Niveau de Qualification ou Diplôme Obtenu</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.niveauQualification || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Titre du Poste Occupé</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.titrePosteOccupe || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">RIB</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.rib || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Situation dans l{"'"}Entreprise</p>
-                <p className="font-medium text-gray-900 dark:text-white">{collaborateur.situationEntreprise || '-'}</p>
-              </div>
-
+          <InfoCard
+            title="Détails Professionnels"
+            icon={<Briefcase className="w-5 h-5 text-blue-500 dark:text-blue-400" />}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <InfoField label="Nombre d'Années d'Expérience" value={collaborateur.nombreAnneeExperience} />
+              <InfoField label="Niveau de Qualification ou Diplôme Obtenu" value={collaborateur.niveauQualification} />
+              <InfoField label="Titre du Poste Occupé" value={collaborateur.titrePosteOccupe} />
+              <InfoField label="RIB" value={collaborateur.rib} />
+              <InfoField label="Situation dans l'Entreprise" value={collaborateur.situationEntreprise} />
             </div>
 
             {collaborateur.tachesAccomplies && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Description</p>
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+              <div className="mt-6">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">Description des tâches</p>
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-inner">
                   {collaborateur.tachesAccomplies}
                 </div>
               </div>
             )}
-          </div>
+          </InfoCard>
         </>
       )}
-      {/* Section de téléchargement de documents en haut */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-          Ajouter une pièce justificative
-        </h2>
 
+      {/* Section de téléchargement de documents */}
+      <InfoCard
+        title="Ajouter une pièce justificative"
+        icon={<Upload className="w-5 h-5 text-blue-500 dark:text-blue-400" />}
+        className="border-l-4 border-blue-500 dark:border-blue-600"
+      >
         <form onSubmit={handleUpload} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Select
                 label="Type de Document"
@@ -448,7 +525,7 @@ export default function CollaborateurDetailPage() {
                 <option value="Contrat">Contrat</option>
                 <option value="CV">CV</option>
                 <option value="Document officiel">Document officiel</option>
-                <option value="Rapport d'évaluation">Rapport d{"'"}évaluation</option>
+                <option value="Rapport d'évaluation">Rapport d'évaluation</option>
                 <option value="Certificat">Certificat</option>
                 <option value="Autre">Autre</option>
               </Select>
@@ -464,28 +541,31 @@ export default function CollaborateurDetailPage() {
               />
               <label
                 htmlFor="document-upload"
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-white mr-4 flex items-center h-10"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-white mr-4 flex items-center h-10 flex-grow transition-colors duration-200"
               >
-                <Upload className="w-4 h-4 mr-2" />
-                {selectedFile ? selectedFile.name : "Parcourir..."}
+                <Upload className="w-4 h-4 mr-2 text-blue-500" />
+                <span className="truncate flex-grow">
+                  {selectedFile ? selectedFile.name : "Parcourir..."}
+                </span>
               </label>
 
               <Button
                 type="submit"
                 disabled={uploadingFile || !selectedFile}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-lg transition-colors duration-200"
               >
                 {uploadingFile ? "Téléchargement..." : "Télécharger"}
               </Button>
             </div>
           </div>
         </form>
-      </div>
+      </InfoCard>
 
       {/* Liste des documents avec barre de recherche */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden mb-6">
+      <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl overflow-hidden mb-6 border border-gray-100 dark:border-gray-700">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+            <FileText className="w-5 h-5 mr-2 text-blue-500 dark:text-blue-400" />
             Documents ({documents.length})
           </h2>
 
@@ -499,9 +579,9 @@ export default function CollaborateurDetailPage() {
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Rechercher un document..."
-              className="pl-10 pr-10 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md
+              className="pl-10 pr-10 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg
                          bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none
-                         focus:ring-2 focus:ring-blue-500"
+                         focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             />
             {searchQuery && (
               <button
@@ -515,93 +595,109 @@ export default function CollaborateurDetailPage() {
         </div>
 
         {filteredDocuments.length === 0 ? (
-          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-            {documents.length === 0
-              ? "Aucun document disponible pour ce collaborateur."
-              : "Aucun document ne correspond à votre recherche."}
+          <div className="p-10 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30">
+            <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+            <p className="text-lg font-medium mb-2">
+              {documents.length === 0
+                ? "Aucun document disponible"
+                : "Aucun résultat trouvé"}
+            </p>
+            <p className="text-sm">
+              {documents.length === 0
+                ? "Vous pouvez ajouter des documents pour ce collaborateur en utilisant le formulaire ci-dessus."
+                : "Essayez de modifier votre recherche pour trouver ce que vous cherchez."}
+            </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader className="bg-gray-50 dark:bg-gray-700">
-              <TableRow className="dark:border-gray-600">
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Nom du Document
-                </TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Type
-                </TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Date d{"'"}Ajout
-                </TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Taille
-                </TableHead>
-                <TableHead className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDocuments.map((document) => (
-                <TableRow key={document.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors">
-                  <TableCell className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FileText className="w-5 h-5 text-gray-400 mr-3" />
-                      <span className="text-gray-900 dark:text-white">{document.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                    {document.type}
-                  </TableCell>
-                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                    {document.date}
-                  </TableCell>
-                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                    {document.size}
-                  </TableCell>
-                  <TableCell className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="flex justify-end space-x-2">
-                      {/* View button - no border */}
-                      <button
-                        className="h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
-                        title="Visualiser"
-                        onClick={() => handleViewDocument(document.id)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-
-                      {/* Download button - no border */}
-                      <button
-                        className="h-8 w-8 rounded-full flex items-center justify-center text-green-600 hover:text-green-800 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/30"
-                        title="Télécharger"
-                        onClick={() => handleDownloadDocument(document.id)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-
-                      {/* Delete button - no border */}
-                      <button
-                        className="h-8 w-8 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
-                        title="Supprimer"
-                        onClick={() => handleDeleteDocument(document.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-gray-50 dark:bg-gray-700">
+                <TableRow className="dark:border-gray-600">
+                  <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Nom du Document
+                  </TableHead>
+                  <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Type
+                  </TableHead>
+                  <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Date d'Ajout
+                  </TableHead>
+                  <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Taille
+                  </TableHead>
+                  <TableHead className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredDocuments.map((document) => (
+                  <TableRow key={document.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors">
+                    <TableCell className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <FileText className="w-5 h-5 text-blue-500 dark:text-blue-400 mr-3" />
+                        <span className="text-gray-900 dark:text-white font-medium">{document.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        {document.type}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                      {document.date}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                      {document.size}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex justify-end space-x-2">
+                        {/* View button */}
+                        <button
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30 transition-colors duration-200"
+                          title="Visualiser"
+                          onClick={() => handleViewDocument(document.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+
+                        {/* Download button */}
+                        <button
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-green-600 hover:text-green-800 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/30 transition-colors duration-200"
+                          title="Télécharger"
+                          onClick={() => handleDownloadDocument(document.id)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+
+                        {/* Delete button */}
+                        <button
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30 transition-colors duration-200"
+                          title="Supprimer"
+                          onClick={() => handleDeleteDocument(document.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </div>
 
-      {/* Bouton de retour */}
+      {/* Bouton de retour avec style amélioré */}
       <div className="flex justify-end space-x-4 mb-8">
         <Button
           onClick={() => router.push('/collaborateurs')}
-          className="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+          className="px-6 py-3 flex items-center gap-2 bg-gradient-to-r from-gray-200 to-gray-100 hover:from-gray-300 hover:to-gray-200
+                     text-gray-800 dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-600 dark:hover:to-gray-700
+                     dark:text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow"
+          variant="outline"
         >
+          <ArrowLeft className="w-4 h-4" />
           Retour à la liste
         </Button>
       </div>

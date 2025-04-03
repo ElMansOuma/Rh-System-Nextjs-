@@ -10,6 +10,7 @@ import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
 import { Select } from "@/components/FormElements/select";
 import Link from "next/link";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 
 export default function Page() {
   const router = useRouter();
@@ -112,13 +113,17 @@ export default function Page() {
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Nouvel en-tête de page au format demandé */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Ajouter un Collaborateur</h1>
 
-        <div className="mt-2">
-          <Link href="/collaborateurs" className="text-blue-500 hover:text-blue-700">
-            &larr; Retour à la liste des collaborateurs
-          </Link>
-        </div>
+        <h1 className="text-2xl font-bold">
+          <Button
+          variant="outline"
+          onClick={() => router.push('/collaborateurs')}
+          className="mr-4 text-gray-600 dark:text-gray-300"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+        </Button>
+          Ajouter un Collaborateur</h1>
+
       </div>
 
       {errorMessage && (
