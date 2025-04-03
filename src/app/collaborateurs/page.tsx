@@ -14,11 +14,28 @@ import Link from 'next/link';
 import { UserPlus, Edit, Trash2, Search, Filter, FileText, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { Pagination } from '@/components/Pagination';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
+import { Notification } from '@/components/Notification';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from "sonner";
 
 export default function CollaborateursPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [collaborateurs, setCollaborateurs] = useState<Collaborateur[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Notification state
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'info',
+    message: '',
+    isVisible: false
+  });
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +44,51 @@ export default function CollaborateursPage() {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Show notification
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({
+      type,
+      message,
+      isVisible: true
+    });
+  };
+
+  // Close notification
+  const closeNotification = () => {
+    setNotification(prev => ({ ...prev, isVisible: false }));
+  };
+
+  // Check for operation status from URL params (after redirect from add/edit page)
+  useEffect(() => {
+    const operation = searchParams.get('operation');
+    const status = searchParams.get('status');
+
+    if (operation && status === 'success') {
+      let message = '';
+
+      switch (operation) {
+        case 'add':
+          message = 'Le collaborateur a été ajouté avec succès';
+          break;
+        case 'edit':
+          message = 'Le collaborateur a été modifié avec succès';
+          break;
+        default:
+          break;
+      }
+
+      if (message) {
+        showNotification('success', message);
+
+        // Remove query params from URL without refreshing page
+        const url = new URL(window.location.href);
+        url.searchParams.delete('operation');
+        url.searchParams.delete('status');
+        window.history.replaceState({}, document.title, url.pathname);
+      }
+    }
+  }, [searchParams]);
 
   // Fetch collaborateurs
   useEffect(() => {
@@ -62,21 +124,24 @@ export default function CollaborateursPage() {
         await collaborateurService.delete(id);
         setCollaborateurs(collaborateurs.filter(collab => collab.id !== id));
 
+        // Show success toast
+        toast.success('Collaborateur supprimé avec succès');
+
         // Update pagination if needed
         if (paginatedCollaborateurs.length === 1 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
         }
       } catch (err) {
         console.error('Failed to delete collaborateur:', err);
-        alert('Impossible de supprimer le collaborateur. Veuillez réessayer plus tard.');
+        // Show error toast
+        toast.error('Impossible de supprimer le collaborateur. Veuillez réessayer plus tard.');
       }
     }
   };
-
   // Handle document view
   const handleViewDocument = (id: number) => {
     // Navigate to detail view
-    window.location.href = `/collaborateurs/document/${id}`;
+    router.push(`/collaborateurs/document/${id}`);
   };
 
   // Calculate total items and pages
@@ -108,6 +173,14 @@ export default function CollaborateursPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      {/* Notification component */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={closeNotification}
+      />
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Liste des Collaborateurs</h1>
         <Link
@@ -296,11 +369,11 @@ export default function CollaborateursPage() {
             </Button>
 
             <div className="bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">
-        <span className="text-sm text-blue-600 dark:text-blue-300">
-          <span className="font-bold">{currentPage}</span>
-          <span className="mx-1 opacity-70">/</span>
-          <span>{totalPages}</span>
-        </span>
+              <span className="text-sm text-blue-600 dark:text-blue-300">
+                <span className="font-bold">{currentPage}</span>
+                <span className="mx-1 opacity-70">/</span>
+                <span>{totalPages}</span>
+              </span>
             </div>
 
             <Button
@@ -323,8 +396,6 @@ export default function CollaborateursPage() {
           </div>
         </div>
       )}
-
-
     </div>
   );
 }

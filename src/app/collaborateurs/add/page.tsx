@@ -9,6 +9,7 @@ import InputGroup from '@/components/FormElements/InputGroup';
 import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
 import { Select } from "@/components/FormElements/select";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function Page() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function Page() {
     }
   };
 
+  // Add Collaborator Form
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -58,10 +60,15 @@ export default function Page() {
       // Envoyer les données au serveur
       await collaborateurService.create(collaborateurData);
 
+      // Show success toast
+      toast.success('Collaborateur ajouté avec succès');
+
       // Rediriger vers la liste des collaborateurs
       router.push('/collaborateurs');
     } catch (error) {
       console.error('Erreur lors de la soumission :', error);
+      // Show error toast
+      toast.error('Une erreur est survenue lors de l\'ajout du collaborateur. Veuillez réessayer.');
       setErrorMessage('Une erreur est survenue lors de l\'ajout du collaborateur. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);

@@ -8,6 +8,7 @@ import collaborateurService, { Collaborateur } from '@/services/collaborateurSer
 import InputGroup from '@/components/FormElements/InputGroup';
 import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
 import { Select } from "@/components/FormElements/select";
+import { toast } from "sonner";
 
 export default function EditCollaborateurPage() {
   const router = useRouter();
@@ -95,18 +96,22 @@ export default function EditCollaborateurPage() {
       // Envoyer les données au serveur
       await collaborateurService.update(id, collaborateurData);
 
+      // Show success toast
+      toast.success('Collaborateur mis à jour avec succès');
+
       // Rediriger vers la liste des collaborateurs
       router.push('/collaborateurs');
     } catch (error: any) {
       console.error('Erreur lors de la mise à jour :', error);
       const errorMsg = error.response?.data?.message ||
         'Une erreur est survenue lors de la mise à jour du collaborateur. Veuillez réessayer.';
+      // Show error toast
+      toast.error(errorMsg);
       setErrorMessage(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
-
   // Define options for select components
   const sexeOptions = [
     { value: 'Homme', label: 'Homme' },

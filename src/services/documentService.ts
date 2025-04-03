@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from "sonner";
 
 const API_URL = 'http://localhost:8080/api/documents';
 
@@ -26,9 +27,15 @@ const documentService = {
           }
         }
       );
+
+      // Add success notification
+      toast.success('Document téléchargé avec succès');
+
       return response.data;
     } catch (error) {
       console.error('Erreur lors du téléchargement du document:', error);
+      // Add error notification
+      toast.error('Erreur lors du téléchargement du document');
       throw error;
     }
   },
@@ -39,6 +46,7 @@ const documentService = {
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la récupération des documents:', error);
+      toast.error('Erreur lors de la récupération des documents');
       throw error;
     }
   },
@@ -49,6 +57,7 @@ const documentService = {
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la récupération du document:', error);
+      toast.error('Erreur lors de la récupération du document');
       throw error;
     }
   },
@@ -74,9 +83,13 @@ const documentService = {
       window.URL.revokeObjectURL(url);
       link.remove();
 
+      // Add success notification
+      toast.success(`Document "${docInfo.name}" téléchargé avec succès`);
+
       return response.data;
     } catch (error) {
       console.error('Erreur lors du téléchargement du document:', error);
+      toast.error('Erreur lors du téléchargement du document');
       throw error;
     }
   },
@@ -113,6 +126,7 @@ const documentService = {
       return response.data;
     } catch (error) {
       console.error('Erreur lors de l\'affichage du document:', error);
+      toast.error('Erreur lors de l\'affichage du document');
       throw error;
     }
   },
@@ -120,9 +134,12 @@ const documentService = {
   deleteDocument: async (id: number) => {
     try {
       await axios.delete(`${API_URL}/${id}`);
+      // Add success notification
+      toast.success('Document supprimé avec succès');
       return true;
     } catch (error) {
       console.error('Erreur lors de la suppression du document:', error);
+      toast.error('Erreur lors de la suppression du document');
       throw error;
     }
   }
