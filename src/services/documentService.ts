@@ -10,7 +10,6 @@ export interface Document {
   date: string;
   size: string;
 }
-
 const documentService = {
   uploadDocument: async (collaborateurId: number, file: File, documentType: string) => {
     try {
