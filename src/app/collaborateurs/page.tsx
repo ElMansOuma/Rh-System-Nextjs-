@@ -172,11 +172,7 @@ export default function CollaborateursPage() {
   const itemsPerPageOptions = [5, 10, 15, 20, 30];
 
   return (
-<<<<<<< HEAD
-    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-=======
     <div className="container mx-auto px-0 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
->>>>>>> 2431bae (contrat frontend)
       {/* Notification component */}
       <Notification
         type={notification.type}
