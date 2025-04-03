@@ -25,16 +25,24 @@ export const NAV_DATA = [
         title: "Tableau de bord",
         icon: HomeIcon,
         url: "/",
+<<<<<<< HEAD
         items: [
 
         ],
+=======
+        items: [],
+>>>>>>> 2431bae (contrat frontend)
       },
       {
         title: "Collaborateurs",
         url: "/collaborateurs",
         icon: UserIcon,
+<<<<<<< HEAD
         items: [
         ],
+=======
+        items: [],
+>>>>>>> 2431bae (contrat frontend)
       },
       {
         title: "Contrats",
