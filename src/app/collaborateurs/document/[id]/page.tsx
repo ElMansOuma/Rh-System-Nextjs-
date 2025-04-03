@@ -420,7 +420,7 @@ export default function CollaborateurDetailPage() {
 
             {collaborateur.tachesAccomplies && (
               <div className="mt-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Tâches Accomplies</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Description</p>
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
                   {collaborateur.tachesAccomplies}
                 </div>

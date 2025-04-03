@@ -397,21 +397,14 @@ export default function EditCollaborateurPage() {
               handleChange={handleInputChange}
             />
 
-            <Select
-              name="situationEntreprise"
-              label="Situation dans l'Entreprise"
-              items={situationEntrepriseOptions}
-              value={formData.situationEntreprise || ''}
-              onChange={handleInputChange}
-              placeholder="Choisir une situation"
-              className="dark:bg-gray-700 dark:text-white"
-            />
+
+
           </div>
 
           <div className="mt-4">
             <TextAreaGroup
               name="tachesAccomplies"
-              label="Tâches Accomplies"
+              label="Description"
               placeholder="Décrivez les tâches accomplies"
               rows={4}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"

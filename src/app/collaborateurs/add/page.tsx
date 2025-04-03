@@ -346,21 +346,13 @@ export default function Page() {
               handleChange={handleInputChange}
             />
 
-            <Select
-              label="Situation dans l'Entreprise"
-              name="situationEntreprise"
-              items={situationEntrepriseOptions}
-              value={formData.situationEntreprise || ''}
-              placeholder="Choisir une situation"
-              onChange={handleInputChange}
-              className="dark:bg-gray-700 dark:text-white"
-            />
+
           </div>
 
           <div className="mt-4">
             <TextAreaGroup
               name="tachesAccomplies"
-              label="Tâches Accomplies"
+              label="Description"
               placeholder="Décrivez les tâches accomplies"
               rows={4}
               className="dark:bg-gray-700 dark:text-white dark:border-gray-600"

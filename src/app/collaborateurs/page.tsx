@@ -154,16 +154,14 @@ export default function CollaborateursPage() {
         </div>
       </div>
 
-      {/* Results Summary */}
-      <div className="flex justify-between items-center mb-3">
-        <div className="text-gray-600 dark:text-gray-300">
-          {loading ? 'Chargement des collaborateurs...' : `${totalItems} collaborateur(s) trouvé(s)`}
-        </div>
-      </div>
+      {/* Results Summary - Moved to the top of the table area */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-t-lg shadow-md border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center">
+          <div className="text-gray-600 dark:text-gray-300 font-medium">
+            {loading ? 'Chargement des collaborateurs...' : `${totalItems} collaborateur(s) trouvé(s)`}
+          </div>
 
-      {/* Top Pagination Controls - Elegant borderless design with correct variant types */}
-      {!loading && totalPages > 0 && (
-        <div className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 p-4 rounded-t-lg shadow-sm mb-0 flex flex-wrap justify-between items-center">
+          {/* Items per page selector */}
           <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-300">
             <span className="font-medium">Afficher</span>
             <select
@@ -175,56 +173,11 @@ export default function CollaborateursPage() {
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
-            <span>collaborateurs par page</span>
-          </div>
-
-          <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-            <Button
-              variant="subtle"
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-              className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              Première
-            </Button>
-
-            <Button
-              variant="subtle"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <div className="bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">
-        <span className="text-sm text-blue-600 dark:text-blue-300">
-          <span className="font-bold">{currentPage}</span>
-          <span className="mx-1 opacity-70">/</span>
-          <span>{totalPages}</span>
-        </span>
-            </div>
-
-            <Button
-              variant="subtle"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="subtle"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-              className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              Dernière
-            </Button>
+            <span>par page</span>
           </div>
         </div>
-      )}
+      </div>
+
       <div className={`bg-white dark:bg-gray-800 shadow-md ${!loading && totalPages > 0 ? 'rounded-b-lg' : 'rounded-lg'} overflow-hidden`}>
         <Table>
           <TableHeader className="bg-gray-50 dark:bg-gray-700">
@@ -319,6 +272,57 @@ export default function CollaborateursPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Simplified Pagination Controls */}
+      {!loading && totalPages > 0 && (
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-center items-center">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="subtle"
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Première
+            </Button>
+
+            <Button
+              variant="subtle"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <div className="bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">
+        <span className="text-sm text-blue-600 dark:text-blue-300">
+          <span className="font-bold">{currentPage}</span>
+          <span className="mx-1 opacity-70">/</span>
+          <span>{totalPages}</span>
+        </span>
+            </div>
+
+            <Button
+              variant="subtle"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="subtle"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Dernière
+            </Button>
+          </div>
+        </div>
+      )}
 
 
     </div>
