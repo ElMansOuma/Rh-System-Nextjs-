@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter, useParams } from 'next/navigation';
 import { Contrat } from '@/types/Contrat';
 import contratService from '@/services/contratService';
 import collaborateurService from '@/services/collaborateurService';
@@ -13,8 +12,12 @@ import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
-export default function AddContratPage() {
+export default function EditContratPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = Number(params.id);
+
+  const [isLoading, setIsLoading] = useState(true);
   const [collaborateurs, setCollaborateurs] = useState<any[]>([]);
   const [filteredCollaborateurs, setFilteredCollaborateurs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +26,7 @@ export default function AddContratPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [currentDocumentUrl, setCurrentDocumentUrl] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<Contrat>({
     collaborateurId: 0,
@@ -35,7 +39,51 @@ export default function AddContratPage() {
     status: 'Actif'
   });
 
+  // Charger les données du contrat au chargement de la page
   useEffect(() => {
+    async function loadContrat() {
+      try {
+        setIsLoading(true);
+        // Récupérer le contrat
+        const data = await contratService.getById(id);
+
+        // Formater les dates pour l'input de type date
+        if (data.dateEmbauche) {
+          data.dateEmbauche = data.dateEmbauche.split('T')[0];
+        }
+        if (data.dateDebut) {
+          data.dateDebut = data.dateDebut.split('T')[0];
+        }
+        if (data.dateFin) {
+          data.dateFin = data.dateFin.split('T')[0];
+        }
+
+        setFormData(data);
+
+        // Récupérer le nom du collaborateur pour l'afficher dans la recherche
+        if (data.collaborateurId) {
+          try {
+            const collaborateur = await collaborateurService.getById(data.collaborateurId);
+            setSearchTerm(`${collaborateur.prenom} ${collaborateur.nom}`);
+          } catch (error) {
+            console.error('Erreur lors de la récupération du collaborateur:', error);
+          }
+        }
+
+        // Définir l'URL du document actuel
+        if (data.id) {
+          setCurrentDocumentUrl(`http://localhost:8080/api/contrats/${data.id}/document`);
+        }
+
+        setErrorMessage(null);
+      } catch (error) {
+        console.error('Erreur lors du chargement du contrat:', error);
+        setErrorMessage('Impossible de charger les informations du contrat. Veuillez réessayer plus tard.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
     // Charger la liste des collaborateurs pour le dropdown
     const fetchCollaborateurs = async () => {
       try {
@@ -44,12 +92,14 @@ export default function AddContratPage() {
         setFilteredCollaborateurs(data);
       } catch (error) {
         console.error('Erreur lors de la récupération des collaborateurs:', error);
-        setErrorMessage('Impossible de charger la liste des collaborateurs.');
       }
     };
 
-    fetchCollaborateurs();
-  }, []);
+    if (id) {
+      loadContrat();
+      fetchCollaborateurs();
+    }
+  }, [id]);
 
   // Fermer le dropdown lorsqu'on clique à l'extérieur
   useEffect(() => {
@@ -126,24 +176,24 @@ export default function AddContratPage() {
     }
 
     try {
-      // Créer le contrat
-      const createdContrat = await contratService.create(formData);
+      // Mettre à jour le contrat
+      await contratService.update(id, formData);
 
       // Si un fichier est sélectionné, télécharger le document
-      if (selectedFile && createdContrat.id) {
-        await contratService.uploadDocument(createdContrat.id, selectedFile);
+      if (selectedFile) {
+        await contratService.uploadDocument(id, selectedFile);
       }
 
       // Show success toast
-      toast.success('Contrat ajouté avec succès');
+      toast.success('Contrat mis à jour avec succès');
 
       // Rediriger vers la liste des contrats
-      router.push('/contrats');
+      router.push('/protected/contrats');
     } catch (error) {
-      console.error('Erreur lors de la création du contrat:', error);
+      console.error('Erreur lors de la mise à jour du contrat:', error);
       // Show error toast
-      toast.error('Une erreur est survenue lors de l\'ajout du contrat. Veuillez réessayer.');
-      setErrorMessage('Une erreur est survenue lors de la création du contrat. Veuillez réessayer.');
+      toast.error('Une erreur est survenue lors de la mise à jour du contrat. Veuillez réessayer.');
+      setErrorMessage('Une erreur est survenue lors de la mise à jour du contrat. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -172,20 +222,31 @@ export default function AddContratPage() {
     { value: 'Espèces', label: 'Espèces' }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Modification d{"'"}un Contrat</h1>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 flex justify-center items-center">
+          <p className="text-gray-700 dark:text-gray-300">Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Nouvel en-tête de page au format demandé */}
+      {/* En-tête de page */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">
           <Button
-          variant="outline"
-          onClick={() => router.push('/collaborateurs')}
-          className="mr-4 text-gray-600 dark:text-gray-300"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-        </Button>
-          Ajouter un Contrat</h1>
-
+            variant="outline"
+            onClick={() => router.push('/protected/contrats')}
+            className="mr-4 text-gray-600 dark:text-gray-300"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+          </Button>
+          Modifier le Contrat
+        </h1>
       </div>
 
       {errorMessage && (
@@ -561,6 +622,25 @@ export default function AddContratPage() {
                 Fichier sélectionné: {selectedFile.name}
               </p>
             )}
+            {currentDocumentUrl && !selectedFile && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  Document actuel:
+                </p>
+                <a
+                  href={currentDocumentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Voir le document
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
@@ -568,7 +648,7 @@ export default function AddContratPage() {
         <div className="flex justify-end space-x-4">
           <Button
             type="button"
-            onClick={() => router.push('/contrats')}
+            onClick={() => router.push('/protected/contrats')}
             className="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
           >
             Annuler
@@ -578,7 +658,7 @@ export default function AddContratPage() {
             disabled={isSubmitting}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-600"
           >
-            {isSubmitting ? 'Enregistrement...' : 'Enregistrer le Contrat'}
+            {isSubmitting ? 'Enregistrement...' : 'Mettre à jour le Contrat'}
           </Button>
         </div>
       </form>

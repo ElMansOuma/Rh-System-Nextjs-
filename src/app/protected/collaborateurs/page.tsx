@@ -141,7 +141,7 @@ export default function CollaborateursPage() {
   // Handle document view
   const handleViewDocument = (id: number) => {
     // Navigate to detail view
-    router.push(`/collaborateurs/document/${id}`);
+    router.push(`/protected/collaborateurs/document/${id}`);
   };
 
   // Calculate total items and pages
@@ -172,7 +172,7 @@ export default function CollaborateursPage() {
   const itemsPerPageOptions = [5, 10, 15, 20, 30];
 
   return (
-    <div className="container mx-auto px-0 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Notification component */}
       <Notification
         type={notification.type}
@@ -184,7 +184,7 @@ export default function CollaborateursPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Liste des Collaborateurs</h1>
         <Link
-          href="/collaborateurs/add"
+          href="/protected/collaborateurs/add"
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
           Ajouter un Collaborateur
@@ -324,7 +324,7 @@ export default function CollaborateursPage() {
 
                       {/* Edit link - no border */}
                       <Link
-                        href={`/collaborateurs/edit/${collaborateur.id}`}
+                        href={`/protected/collaborateurs/edit/${collaborateur.id}`}
                         className="h-8 w-8 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700/50"
                       >
                         <Edit className="h-4 w-4" />

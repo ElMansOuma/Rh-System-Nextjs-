@@ -24,34 +24,34 @@ export const NAV_DATA = [
       {
         title: "Tableau de bord",
         icon: HomeIcon,
-        url: "/",
+        url: "/test",
         items: [],
       },
       {
         title: "Collaborateurs",
-        url: "/collaborateurs",
+        url: "/protected/collaborateurs",
         icon: UserIcon,
         items: [],
       },
       {
         title: "Contrats",
-        url: "/contrats",
+        url: "/protected/contrats",
         icon: TableIcon,
         items: [
         ],
       },
       {
         title: "Gestion Temps",
-        url: "/gestion-temps",
+        url: "/protected/gestion-temps",
         icon: CalendarIcon,
         items: [
           {
             title: "Pointage",
-            url: "/gestion-temps/pointage",
+            url: "/protected/gestion-temps/pointage",
           },
           {
             title: "Retards",
-            url: "/gestion-temps/retards",
+            url: "/protected/gestion-temps/retards",
           },
         ],
       },
@@ -61,11 +61,11 @@ export const NAV_DATA = [
         items: [
           {
             title: "Demande de Congé",
-            url: "/conges/demande",
+            url: "/protected/conges/demande",
           },
           {
             title: "Historique des Congés",
-            url: "/conges/historique",
+            url: "/protected/conges/historique",
           },
         ],
       },
@@ -75,7 +75,7 @@ export const NAV_DATA = [
         items: [
           {
             title: "Paramètres du Compte",
-            url: "/parametres/compte",
+            url: "/protected/parametres/compte",
           },
         ],
       },

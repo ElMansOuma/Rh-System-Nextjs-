@@ -100,7 +100,7 @@ export default function EditCollaborateurPage() {
       toast.success('Collaborateur mis à jour avec succès');
 
       // Rediriger vers la liste des collaborateurs
-      router.push('/collaborateurs');
+      router.push('/protected/collaborateurs');
     } catch (error: any) {
       console.error('Erreur lors de la mise à jour :', error);
       const errorMsg = error.response?.data?.message ||
@@ -423,7 +423,7 @@ export default function EditCollaborateurPage() {
         <div className="flex justify-end space-x-4">
           <Button
             type="button"
-            onClick={() => router.push('/collaborateurs')}
+            onClick={() => router.push('/protected/collaborateurs')}
             className="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
           >
             Annuler

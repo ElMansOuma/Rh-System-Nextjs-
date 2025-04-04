@@ -309,7 +309,7 @@ export default function CollaborateurDetailPage() {
         <div className="flex items-center mb-6">
           <Button
             variant="outline"
-            onClick={() => router.push('/collaborateurs')}
+            onClick={() => router.push('/protected/collaborateurs')}
             className="mr-4 text-gray-600 dark:text-gray-300"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -333,7 +333,7 @@ export default function CollaborateurDetailPage() {
 
           <Button
             variant="outline"
-            onClick={() => router.push('/collaborateurs')}
+            onClick={() => router.push('/protected/collaborateurs')}
             className="mr-4 text-gray-600 dark:text-gray-300"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -489,12 +489,11 @@ export default function CollaborateurDetailPage() {
               <InfoField label="Niveau de Qualification ou Diplôme Obtenu" value={collaborateur.niveauQualification} />
               <InfoField label="Titre du Poste Occupé" value={collaborateur.titrePosteOccupe} />
               <InfoField label="RIB" value={collaborateur.rib} />
-              <InfoField label="Situation dans l'Entreprise" value={collaborateur.situationEntreprise} />
             </div>
 
             {collaborateur.tachesAccomplies && (
               <div className="mt-6">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">Description des tâches</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">Description</p>
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-inner">
                   {collaborateur.tachesAccomplies}
                 </div>
@@ -689,7 +688,7 @@ export default function CollaborateurDetailPage() {
       {/* Bouton de retour avec style amélioré */}
       <div className="flex justify-end space-x-4 mb-8">
         <Button
-          onClick={() => router.push('/collaborateurs')}
+          onClick={() => router.push('/protected/collaborateurs')}
           className="px-6 py-3 flex items-center gap-2 bg-gradient-to-r from-gray-200 to-gray-100 hover:from-gray-300 hover:to-gray-200
                      text-gray-800 dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-600 dark:hover:to-gray-700
                      dark:text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow"
