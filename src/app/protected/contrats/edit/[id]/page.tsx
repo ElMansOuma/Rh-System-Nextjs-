@@ -356,7 +356,7 @@ export default function EditContratPage() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Date d'embauche
+                Date d{"'"}embauche
               </label>
               <input
                 type="date"

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Contrat } from '@/types/Contrat';
 import contratService from '@/services/contratService';
 import collaborateurService from '@/services/collaborateurService';
@@ -295,7 +294,7 @@ export default function AddContratPage() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Date d'embauche
+                Date d{"'"}embauche
               </label>
               <input
                 type="date"

@@ -522,7 +522,7 @@ export default function CollaborateurDetailPage() {
                 <option value="Contrat">Contrat</option>
                 <option value="CV">CV</option>
                 <option value="Document officiel">Document officiel</option>
-                <option value="Rapport d'évaluation">Rapport d'évaluation</option>
+                <option value="Rapport d'évaluation">Rapport d{"'"}évaluation</option>
                 <option value="Certificat">Certificat</option>
                 <option value="Autre">Autre</option>
               </Select>
@@ -617,7 +617,7 @@ export default function CollaborateurDetailPage() {
                     Type
                   </TableHead>
                   <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Date d'Ajout
+                    Date d{"'"}Ajout
                   </TableHead>
                   <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Taille
