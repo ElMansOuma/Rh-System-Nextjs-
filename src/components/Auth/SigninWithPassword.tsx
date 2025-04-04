@@ -1,12 +1,14 @@
-// components/Auth/SigninWithPassword/index.jsx (même code, simplement optimisé pour l'espace)
 "use client";
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
 import Link from "next/link";
 import React, { useState } from "react";
 import InputGroup from "../FormElements/InputGroup";
 import { Checkbox } from "../FormElements/checkbox";
+import AuthService from "@/services/authService";
+import { useRouter } from "next/navigation";
 
 export default function SigninWithPassword() {
+  const router = useRouter();
   const [data, setData] = useState({
     email: process.env.NEXT_PUBLIC_DEMO_USER_MAIL || "",
     password: process.env.NEXT_PUBLIC_DEMO_USER_PASS || "",
@@ -14,6 +16,7 @@ export default function SigninWithPassword() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setData({
@@ -22,16 +25,33 @@ export default function SigninWithPassword() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    setError("");
+
+    try {
+      await AuthService.login(data);
+      // Redirection après connexion réussie
+      router.push("/protected/collaborateurs"); // Ajustez selon votre route de tableau de bord
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message ||
+        "Une erreur s'est produite lors de la connexion"
+      );
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg">
+          {error}
+        </div>
+      )}
+
       <InputGroup
         type="email"
         label="Email"
@@ -81,6 +101,7 @@ export default function SigninWithPassword() {
         <button
           type="submit"
           className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-3 font-medium text-white transition hover:bg-opacity-90"
+          disabled={loading}
         >
           Connexion
           {loading && (

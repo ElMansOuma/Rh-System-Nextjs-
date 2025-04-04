@@ -1,11 +1,15 @@
+// components/Auth/SignupWithPassword/index.tsx
 "use client";
 import { EmailIcon, PasswordIcon, UserIcon } from "@/assets/icons";
 import Link from "next/link";
 import React, { useState, ChangeEvent } from "react";
 import InputGroup from "../FormElements/InputGroup";
 import { Checkbox } from "../FormElements/checkbox";
+import AuthService from "@/services/authService";
+import { useRouter } from "next/navigation";
 
 export default function SignupWithPassword() {
+  const router = useRouter();
   const [data, setData] = useState({
     fullName: "",
     email: "",
@@ -13,7 +17,9 @@ export default function SignupWithPassword() {
     confirmPassword: "",
     agreeTerms: false,
   });
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setData({
@@ -22,16 +28,48 @@ export default function SignupWithPassword() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log("Formulaire soumis", data); // Ajout de log pour déboguer
+
+    if (!data.agreeTerms) {
+      setError("Vous devez accepter les conditions d'utilisation");
+      return;
+    }
+
+    if (data.password !== data.confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+    setError("");
+
+    try {
+      console.log("Tentative d'inscription avec:", data);
+      const response = await AuthService.register(data);
+      console.log("Réponse d'inscription:", response);
+      // Redirection après inscription réussie
+      router.push("/public/auth/sign-in");
+    } catch (err: any) {
+      console.error("Erreur d'inscription:", err);
+      setError(
+        err.response?.data?.message ||
+        "Une erreur s'est produite lors de l'inscription"
+      );
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg">
+          {error}
+        </div>
+      )}
+
       <InputGroup
         type="text"
         label="Nom complet"
@@ -41,6 +79,7 @@ export default function SignupWithPassword() {
         handleChange={handleChange}
         value={data.fullName}
         icon={<UserIcon />}
+        required
       />
       <InputGroup
         type="email"
@@ -51,16 +90,18 @@ export default function SignupWithPassword() {
         handleChange={handleChange}
         value={data.email}
         icon={<EmailIcon />}
+        required
       />
       <InputGroup
         type="password"
         label="Mot de passe"
         className="mb-4 [&_input]:py-3"
-        placeholder=" Créez un mot de passe"
+        placeholder="Créez un mot de passe"
         name="password"
         handleChange={handleChange}
         value={data.password}
         icon={<PasswordIcon />}
+        required
       />
       <InputGroup
         type="password"
@@ -71,6 +112,7 @@ export default function SignupWithPassword() {
         handleChange={handleChange}
         value={data.confirmPassword}
         icon={<PasswordIcon />}
+        required
       />
       <div className="mb-5 flex items-start gap-2 py-1 font-medium">
         <Checkbox
@@ -79,14 +121,13 @@ export default function SignupWithPassword() {
           withIcon="check"
           minimal
           radius="md"
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            console.log("Terms checkbox changed:", e.target.checked);
             setData({
               ...data,
               agreeTerms: e.target.checked,
-            })
-          }
-          // Assuming 'required' is not a valid prop for your Checkbox component
-          // If you need to make it required, update your Checkbox component to accept this prop
+            });
+          }}
         />
 
         <div className="ml-1">
@@ -95,7 +136,7 @@ export default function SignupWithPassword() {
             <Link href="/terms" className="text-primary">
              Conditions d'utilisation
             </Link>{" "}
-            and{" "}
+            et{" "}
             <Link href="/privacy" className="text-primary">
              Politique de confidentialité
             </Link>
@@ -106,7 +147,7 @@ export default function SignupWithPassword() {
         <button
           type="submit"
           className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-3 font-medium text-white transition hover:bg-opacity-90"
-          disabled={!data.agreeTerms}
+          disabled={!data.agreeTerms || loading}
         >
           Créer un compte
           {loading && (
