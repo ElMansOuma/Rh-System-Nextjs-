@@ -1,3 +1,4 @@
+// components/Auth/SigninWithPassword/index.jsx (même code, simplement optimisé pour l'espace)
 "use client";
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
 import Link from "next/link";
@@ -23,10 +24,7 @@ export default function SigninWithPassword() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // You can remove this code block
     setLoading(true);
-
     setTimeout(() => {
       setLoading(false);
     }, 1000);
@@ -37,8 +35,8 @@ export default function SigninWithPassword() {
       <InputGroup
         type="email"
         label="Email"
-        className="mb-4 [&_input]:py-[15px]"
-        placeholder="Enter your email"
+        className="mb-4 [&_input]:py-3"
+        placeholder="Entrez votre email"
         name="email"
         handleChange={handleChange}
         value={data.email}
@@ -47,18 +45,18 @@ export default function SigninWithPassword() {
 
       <InputGroup
         type="password"
-        label="Password"
-        className="mb-5 [&_input]:py-[15px]"
-        placeholder="Enter your password"
+        label="mot de passe"
+        className="mb-4 [&_input]:py-3"
+        placeholder="Entrez votre mot de passe"
         name="password"
         handleChange={handleChange}
         value={data.password}
         icon={<PasswordIcon />}
       />
 
-      <div className="mb-6 flex items-center justify-between gap-2 py-2 font-medium">
+      <div className="mb-5 flex items-center justify-between gap-2 py-1 font-medium">
         <Checkbox
-          label="Remember me"
+          label="Se souvenir de moi"
           name="remember"
           withIcon="check"
           minimal
@@ -75,16 +73,16 @@ export default function SigninWithPassword() {
           href="/public/auth/forgot-password"
           className="hover:text-primary dark:text-white dark:hover:text-primary"
         >
-          Forgot Password?
+          Mot de passe oublié ?
         </Link>
       </div>
 
-      <div className="mb-4.5">
+      <div>
         <button
           type="submit"
-          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-3 font-medium text-white transition hover:bg-opacity-90"
         >
-          Sign In
+          Connexion
           {loading && (
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-t-transparent dark:border-primary dark:border-t-transparent" />
           )}

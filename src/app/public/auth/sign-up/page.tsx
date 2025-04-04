@@ -1,20 +1,19 @@
-// app/public/auth/sign-in/page.tsx
-import Signin from "@/components/Auth/Signin";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import Signup from "@/components/Auth/Signup";
 
 export const metadata: Metadata = {
-  title: "Sign in",
+  title: "Sign up",
 };
 
-export default function SignIn() {
+export default function SignUp() {
   return (
     <div className="h-screen w-screen flex items-center justify-center overflow-hidden">
       <div className="w-full h-full max-w-7xl mx-auto rounded-lg bg-white shadow-1 dark:bg-gray-dark dark:shadow-card flex">
         <div className="w-full xl:w-1/2 h-full flex items-center justify-center p-4 sm:p-8">
           <div className="w-full max-w-md">
-            <Signin />
+            <Signup />
           </div>
         </div>
 
@@ -38,16 +37,15 @@ export default function SignIn() {
             </Link>
             <div className="flex flex-col flex-grow">
               <p className="mb-3 text-xl font-medium text-dark dark:text-white">
-                Connectez-vous à votre compte
+                Créer un nouveau compte
               </p>
 
               <h1 className="mb-4 text-2xl font-bold text-dark dark:text-white sm:text-heading-3">
-                Bienvenue !
+                Commencez !
               </h1>
 
               <p className="w-full max-w-[375px] font-medium text-dark-4 dark:text-dark-6">
-                Veuillez vous connecter à votre compte en remplissant les champs nécessaires ci-dessous
-              </p>
+                Rejoignez notre communauté en créant votre compte et profitez de toutes nos fonctionnalités              </p>
 
               <div className="mt-auto">
                 <Image
