@@ -75,7 +75,7 @@ export const NAV_DATA = [
         items: [
           {
             title: "Paramètres du Compte",
-            url: "/protected/parametres/compte",
+            url: "/protected/pages/settings",
           },
         ],
       },
