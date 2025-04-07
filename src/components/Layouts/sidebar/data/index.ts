@@ -44,16 +44,7 @@ export const NAV_DATA = [
         title: "Gestion Temps",
         url: "/protected/gestion-temps",
         icon: CalendarIcon,
-        items: [
-          {
-            title: "Pointage",
-            url: "/protected/gestion-temps/pointage",
-          },
-          {
-            title: "Retards",
-            url: "/protected/gestion-temps/retards",
-          },
-        ],
+        items: [],
       },
       {
         title: "Congés",
