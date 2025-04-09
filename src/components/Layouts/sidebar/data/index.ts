@@ -44,22 +44,15 @@ export const NAV_DATA = [
         title: "Gestion Temps",
         url: "/protected/gestion-temps",
         icon: CalendarIcon,
-        items: [],
-      },
-      {
-        title: "Congés",
-        icon: CalendarIcon,
         items: [
           {
-            title: "Demande de Congé",
-            url: "/protected/conges/demande",
-          },
-          {
-            title: "Historique des Congés",
-            url: "/protected/conges/historique",
+            title: "absences",
+            url: "/protected/gestion-temps/abscence",
           },
         ],
       },
+
+
       {
         title: "Paramètres",
         icon: SettingsIcon,

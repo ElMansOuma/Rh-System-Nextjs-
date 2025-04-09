@@ -82,7 +82,6 @@ const absenceService = {
             'Content-Type': 'multipart/form-data'
           }
         });
-
         // Récupérer les données mises à jour
         const updatedResponse = await axios.get(`${API_URL}/${id}`);
         return updatedResponse.data;

@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import collaborateurService from '@/services/collaborateurService';
+import absenceService, { Absence } from '@/services/absenceService';
+import contratService from '@/services/contratService';
+import { Contrat } from '@/types/Contrat';
 import documentService, { Document } from '@/services/documentService';
 import {
   Table,
@@ -30,8 +32,10 @@ import {
   CreditCard,
   Hash,
   Search,
-  Home,
-  Users
+  Clock,
+  BarChart2,
+  PieChart,
+  AlertCircle
 } from 'lucide-react';
 
 // Composant Select amélioré
@@ -106,6 +110,226 @@ const InfoField: React.FC<{
   );
 };
 
+
+// Composant pour les statistiques avec style de carte
+const StatCard: React.FC<{
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+}> = ({ title, value, icon, color }) => {
+  return (
+    <div className={`bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md border-l-4 ${color} transition-all duration-200 hover:shadow-lg`}>
+      <div className="flex justify-between">
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        </div>
+        <div className={`h-12 w-12 rounded-full flex items-center justify-center ${color.replace('border', 'bg').replace('-500', '-100').replace('-600', '-900/20')} ${color.replace('border', 'text').replace('-600', '-400')}`}>
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Fonction utilitaire pour calculer le nombre de jours entre deux dates
+const calculateDaysBetween = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Réinitialiser les heures pour éviter les problèmes de calcul
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  let count = 0;
+  let current = new Date(start);
+
+  // Parcourir chaque jour dans la plage
+  while (current <= end) {
+    // 0 = Dimanche, 6 = Samedi
+    const dayOfWeek = current.getDay();
+    // Ne compter que les jours de la semaine (lundi au vendredi)
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      count++;
+    }
+
+    // Passer au jour suivant
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
+};
+
+// Composant pour la section Dashboard des absences
+const AbsencesDashboard: React.FC<{
+  absences: Absence[];
+}> = ({ absences }) => {
+  // Calculer l'année en cours
+  const currentYear = new Date().getFullYear();
+
+  // Calculer les statistiques des absences
+  const calculateAbsenceStats = () => {
+    // Initialiser les statistiques
+    const stats = {
+      totalDaysThisYear: 0,
+      totalAbsencesThisYear: 0,
+      absencesByMotif: {} as Record<string, number>,
+      absencesByMonth: Array(12).fill(0),
+      absencesByStatus: {
+        'En attente': 0,
+        'Approuvée': 0,
+        'Rejetée': 0,
+      },
+      longestAbsence: 0
+    };
+
+    // Analyser chaque absence
+    absences.forEach(absence => {
+      const startDate = new Date(absence.dateDebut);
+      const endDate = new Date(absence.dateFin);
+      const year = startDate.getFullYear();
+
+      // Calculer la durée de l'absence en jours ouvrables uniquement
+      const daysCount = calculateDaysBetween(absence.dateDebut, absence.dateFin);
+
+      // Le reste du code reste inchangé
+      if (daysCount > stats.longestAbsence) {
+        stats.longestAbsence = daysCount;
+      }
+
+      // Statistiques pour l'année en cours
+      if (year === currentYear) {
+        stats.totalDaysThisYear += daysCount;
+        stats.totalAbsencesThisYear++;
+        // Compter par mois (pour l'année en cours)
+        const month = startDate.getMonth();
+        stats.absencesByMonth[month] += daysCount;
+      }
+
+      // Compter par motif
+      if (!stats.absencesByMotif[absence.motif]) {
+        stats.absencesByMotif[absence.motif] = 0;
+      }
+      stats.absencesByMotif[absence.motif] += daysCount;
+
+      // Compter par statut
+      stats.absencesByStatus[absence.status] += daysCount;
+    });
+
+    return stats;
+  };
+
+  const stats = calculateAbsenceStats();
+
+  // Obtenir les données de motif pour l'affichage
+  const motifEntries = Object.entries(stats.absencesByMotif);
+  motifEntries.sort((a, b) => b[1] - a[1]); // Trier par nombre de jours décroissant
+
+  // Noms des mois en français
+  const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+  return (
+    <>
+      {/* Cartes de statistiques principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="Total jours d'absence (année courante)"
+          value={stats.totalDaysThisYear}
+          icon={<Calendar className="h-6 w-6" />}
+          color="border-blue-500 dark:border-blue-600"
+        />
+        <StatCard
+          title="Nombre d'absences (année courante)"
+          value={stats.totalAbsencesThisYear}
+          icon={<Clock className="h-6 w-6" />}
+          color="border-green-500 dark:border-green-600"
+        />
+        <StatCard
+          title="En attente de validation"
+          value={stats.absencesByStatus['En attente']}
+          icon={<AlertCircle className="h-6 w-6" />}
+          color="border-yellow-500 dark:border-yellow-600"
+        />
+        <StatCard
+          title="Plus longue absence (jours)"
+          value={stats.longestAbsence}
+          icon={<BarChart2 className="h-6 w-6" />}
+          color="border-purple-500 dark:border-purple-600"
+        />
+      </div>
+
+      {/* Graphiques et analyses détaillées */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Distribution par mois */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md">
+          <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white flex items-center">
+            <BarChart2 className="h-5 w-5 mr-2 text-blue-500" />
+            Jours d'absences par mois ({currentYear})
+          </h3>
+          <div className="h-48 overflow-hidden">
+            <div className="flex items-end h-40 gap-1">
+              {stats.absencesByMonth.map((days, index) => (
+                <div key={index} className="flex flex-col items-center flex-grow">
+                  <div className="relative w-full group">
+                    <div
+                      className="w-full bg-blue-200 dark:bg-blue-900/30 hover:bg-blue-300 dark:hover:bg-blue-800/50 rounded-t transition-all duration-200"
+                      style={{
+                        height: `${days > 0 ? Math.max(days * 4, 4) : 0}px`,
+                        maxHeight: '100%'
+                      }}
+                    ></div>
+                    {days > 0 && (
+                      <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {days} jr{days > 1 ? 's' : ''}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs mt-1 text-gray-500 dark:text-gray-400">{monthNames[index].substring(0, 3)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Distribution par motif */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md">
+          <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white flex items-center">
+            <PieChart className="h-5 w-5 mr-2 text-green-500" />
+            Répartition par motif
+          </h3>
+          <div className="space-y-3">
+            {motifEntries.length > 0 ? (
+              motifEntries.map(([motif, days], index) => (
+                <div key={index}>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{motif}</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{days} jour{days > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        index % 4 === 0 ? 'bg-blue-500 dark:bg-blue-600' :
+                          index % 4 === 1 ? 'bg-green-500 dark:bg-green-600' :
+                            index % 4 === 2 ? 'bg-purple-500 dark:bg-purple-600' :
+                              'bg-yellow-500 dark:bg-yellow-600'
+                      }`}
+                      style={{ width: `${(days / Object.values(stats.absencesByMotif).reduce((a, b) => a + b, 0)) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">Aucune donnée disponible</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 export default function CollaborateurDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -116,6 +340,13 @@ export default function CollaborateurDetailPage() {
   const [currentPhotoUrl, setCurrentPhotoUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // États pour les absences
+  const [absences, setAbsences] = useState<Absence[]>([]);
+  const [absencesLoading, setAbsencesLoading] = useState(true);
+
+  //contrats
+  const [contratActif, setContratActif] = useState<Contrat | null>(null);
+  const [contratLoading, setContratLoading] = useState(true);
   // États pour la gestion des documents
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
@@ -125,11 +356,18 @@ export default function CollaborateurDetailPage() {
   const [documentType, setDocumentType] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Charger les données du collaborateur et ses documents au chargement de la page
+  // État pour l'onglet actif
+  const [activeTab, setActiveTab] = useState<'documents' | 'absences'>('documents');
+
+  // Charger les données du collaborateur, ses documents et ses absences au chargement de la page
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
+        setAbsencesLoading(true);
+        setContratLoading(true);  // Ajouté
+
+        // Charger les données du collaborateur
         const data = await collaborateurService.getById(collaborateurId);
 
         // Formater les dates pour l'affichage
@@ -152,12 +390,31 @@ export default function CollaborateurDetailPage() {
         setDocuments(documentsData);
         setFilteredDocuments(documentsData);
 
+        // Récupérer les absences du collaborateur
+        const absencesData = await absenceService.getByCollaborateur(collaborateurId);
+        setAbsences(absencesData);
+
+        // Nouveau bloc pour récupérer les contrats
+        try {
+          const contratsData = await contratService.getByCollaborateurId(collaborateurId);
+          // Filtrer pour ne garder que le contrat actif (si présent)
+          const contratActif = contratsData.find((contrat: any) =>
+            !contrat.dateFin || new Date(contrat.dateFin) > new Date()
+          );
+          setContratActif(contratActif || null);
+        } catch (error) {
+          console.error('Erreur lors du chargement des contrats:', error);
+          // Ne pas afficher d'erreur globale, juste pour les contrats
+        }
+
         setErrorMessage(null);
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
         setErrorMessage('Impossible de charger les informations du collaborateur ou ses documents. Veuillez réessayer plus tard.');
       } finally {
         setIsLoading(false);
+        setAbsencesLoading(false);
+        setContratLoading(false);  // Ajouté
       }
     }
 
@@ -373,7 +630,6 @@ export default function CollaborateurDetailPage() {
           </div>
         </div>
       )}
-
       {/* Informations du collaborateur */}
       {collaborateur && (
         <>
@@ -455,6 +711,31 @@ export default function CollaborateurDetailPage() {
             </div>
           </div>
 
+          <div className="space-y-6">
+            {absencesLoading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                <p className="ml-4 text-gray-700 dark:text-gray-300">Chargement des absences...</p>
+              </div>
+            ) : absences.length === 0 ? (
+              <div className="p-10 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30 rounded-lg">
+                <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-lg font-medium mb-2">Aucune absence enregistrée</p>
+                <p className="text-sm">Ce collaborateur n'a pas encore d'absences dans le système.</p>
+              </div>
+            ) : (
+              <>
+                {/* Dashboard des statistiques d'absences */}
+                <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white flex items-center mb-6">
+                    <BarChart2 className="w-5 h-5 mr-2 text-blue-500 dark:text-blue-400" />
+                    Dashboard des Absences
+                  </h2>
+                  <AbsencesDashboard absences={absences} />
+                </div>
+              </>
+            )}
+          </div>
           {/* Coordonnées */}
           <InfoCard
             title="Coordonnées"
@@ -501,6 +782,60 @@ export default function CollaborateurDetailPage() {
             )}
           </InfoCard>
         </>
+      )}
+      {/* Informations du contrat actif - Ajoutez ce bloc */}
+      {contratActif ? (
+        <InfoCard
+          title="Informations du contrat actif"
+          icon={<Briefcase className="w-5 h-5 text-blue-500 dark:text-blue-400" />}
+          className="border-l-4 border-green-500 dark:border-green-600"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <InfoField
+              label="Type de contrat"
+              value={contratActif.typeContrat}
+              icon={<File className="w-4 h-4 text-gray-500" />}
+            />
+            <InfoField
+              label="Date d'embauche"
+              value={formatDate(contratActif.dateEmbauche)}
+              icon={<Calendar className="w-4 h-4 text-gray-500" />}
+            />
+            <InfoField
+              label="Date de début"
+              value={formatDate(contratActif.dateDebut)}
+              icon={<Calendar className="w-4 h-4 text-gray-500" />}
+            />
+            {contratActif.dateFin && (
+              <InfoField
+                label="Date de fin"
+                value={formatDate(contratActif.dateFin)}
+                icon={<Calendar className="w-4 h-4 text-gray-500" />}
+              />
+            )}
+            <InfoField
+              label="Numéro de contrat"
+              value={contratActif.numeroContrat}
+              icon={<Hash className="w-4 h-4 text-gray-500" />}
+            />
+          </div>
+        </InfoCard>
+      ) : contratLoading ? (
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 flex justify-center items-center">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="ml-4 text-gray-700 dark:text-gray-300">Chargement des données du contrat...</p>
+        </div>
+      ) : (
+        <InfoCard
+          title="Informations du contrat"
+          icon={<Briefcase className="w-5 h-5 text-blue-500 dark:text-blue-400" />}
+          className="border-l-4 border-yellow-500 dark:border-yellow-600"
+        >
+          <div className="flex flex-col items-center justify-center py-6 text-gray-500 dark:text-gray-400">
+            <File className="w-12 h-12 mb-3 text-gray-300 dark:text-gray-600" />
+            <p className="text-center">Aucun contrat actif trouvé pour ce collaborateur.</p>
+          </div>
+        </InfoCard>
       )}
 
       {/* Section de téléchargement de documents */}

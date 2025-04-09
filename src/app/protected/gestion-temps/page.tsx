@@ -6,7 +6,6 @@ import { Calendar, AlertCircle, Clock } from "lucide-react";
 
 export default function GestionTempsPage() {
   const router = useRouter();
-
   // Cartes pour la navigation
   const navigationCards = [
     {
@@ -34,7 +33,6 @@ export default function GestionTempsPage() {
       bgHover: "hover:bg-green-50 dark:hover:bg-green-900/20"
     }
   ];
-
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-8">
