@@ -2,7 +2,9 @@
 import axios from 'axios';
 
 // Utilisez la bonne URL avec le préfixe correcte
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = 'http://3.67.202.103:8080';
+// Ne pas utiliser /api comme base, mais le compléter dans chaque appel
+const API_URL = API_BASE_URL;
 
 console.log("API URL:", API_URL); // Pour déboguer
 

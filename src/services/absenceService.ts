@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/absences';
+const API_BASE_URL = 'http://3.67.202.103:8080';
+const API_URL = `${API_BASE_URL}/api/absences`;
 
 export interface Absence {
   id?: number;
@@ -26,8 +27,7 @@ const absenceService = {
 
     // Si un justificatif est présent, construire l'URL complète
     if (response.data.justificatifUrl) {
-      response.data.justificatifUrl = `http://localhost:8080${response.data.justificatifUrl}`;
-    }
+      response.data.justificatifUrl = `${API_BASE_URL}${response.data.justificatifUrl}`;    }
 
     return response.data;
   },

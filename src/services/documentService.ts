@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { toast } from "sonner";
 
-const API_URL = 'http://localhost:8080/api/documents';
+const API_BASE_URL = 'http://3.67.202.103:8080';
+const API_URL = `${API_BASE_URL}/api/documents`;
 
 export interface Document {
   id: number;

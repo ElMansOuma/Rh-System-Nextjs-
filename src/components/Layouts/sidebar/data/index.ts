@@ -14,8 +14,19 @@ export interface NavItem {
   url?: string;
   icon?: React.ComponentType;
   items?: NavItem[];
-}
+  onClick?: () => void; // Ajout d'une propriété onClick
 
+}
+const handleLogout = () => {
+  // Supprimer le token d'authentification du localStorage ou sessionStorage
+  localStorage.removeItem('authToken'); // Ajustez selon votre mécanisme de stockage
+
+  // Vous pourriez également avoir besoin d'appeler une API pour invalider le token côté serveur
+  // fetch('/api/logout', { method: 'POST' });
+
+  // Rediriger vers la page de connexion
+  window.location.href = "/public/auth/sign-in";
+};
 export const NAV_DATA = [
   {
     label: "MAIN MENU",
@@ -71,11 +82,11 @@ export const NAV_DATA = [
     items: [
       {
         title: "Déconnexion",
-        url: "/auth/deconnexion",
+        url: "#", // URL fictive, l'action sera gérée par onClick
         icon: LogOutIcon,
+        onClick: handleLogout, // Ajout de la fonction de déconnexion
         items: [],
       },
-
     ],
   },
 ];

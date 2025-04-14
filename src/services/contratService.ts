@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Contrat } from '../types/Contrat';
 
-const API_URL = 'http://localhost:8080/api/contrats';
-
+const API_BASE_URL = 'http://3.67.202.103:8080';
+const API_URL = `${API_BASE_URL}/api/contrats`;
 const contratService = {
   getAll: async () => {
     const response = await axios.get(API_URL);

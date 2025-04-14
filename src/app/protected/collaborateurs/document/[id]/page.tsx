@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import collaborateurService from '@/services/collaborateurService';
@@ -266,8 +267,9 @@ const AbsencesDashboard: React.FC<{
         <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md">
           <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white flex items-center">
             <BarChart2 className="h-5 w-5 mr-2 text-blue-500" />
-            Jours d'absences par mois ({currentYear})
+            Jours d{"'"}absences par mois ({currentYear})
           </h3>
+
           <div className="h-48 overflow-hidden">
             <div className="flex items-end h-40 gap-1">
               {stats.absencesByMonth.map((days, index) => (
@@ -382,7 +384,7 @@ export default function CollaborateurDetailPage() {
 
         // Définir l'URL de la photo actuelle
         if (data.id) {
-          setCurrentPhotoUrl(`http://localhost:8080/api/collaborateurs/${data.id}/photo`);
+          setCurrentPhotoUrl(`http://3.67.202.103:8080/api/collaborateurs/${data.id}/photo`);
         }
 
         // Récupérer les documents du collaborateur
@@ -640,11 +642,14 @@ export default function CollaborateurDetailPage() {
               <div className="flex-shrink-0 flex justify-center">
                 <div className="relative w-40 h-40">
                   {currentPhotoUrl ? (
-                    <img
+                    <Image
                       src={currentPhotoUrl}
                       alt={`${collaborateur.prenom} ${collaborateur.nom}`}
-                      className="w-40 h-40 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-md transition-transform duration-300 hover:scale-105"
+                      width={160} // 40 * 4 = 160px (based on w-40)
+                      height={160} // 40 * 4 = 160px (based on h-40)
+                      className="rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-md transition-transform duration-300 hover:scale-105"
                       onError={(e) => {
+                        // Note: Next/Image handles errors differently
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder-profile.png'; // Image de secours
                       }}
@@ -721,7 +726,7 @@ export default function CollaborateurDetailPage() {
               <div className="p-10 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30 rounded-lg">
                 <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p className="text-lg font-medium mb-2">Aucune absence enregistrée</p>
-                <p className="text-sm">Ce collaborateur n'a pas encore d'absences dans le système.</p>
+                <p className="text-sm">Ce collaborateur n{"'"}a pas encore d{"'"}absences dans le système.</p>
               </div>
             ) : (
               <>

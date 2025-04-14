@@ -1,9 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { TextAreaGroup } from "@/components/FormElements/InputGroup/text-area";
 import { Select } from "@/components/FormElements/select";
 import { ShowcaseSection } from "@/components/Layouts/showcase-section";
+import { ChangeEvent } from "react";
 
 export function ContactForm() {
+  const [selectedSubject, setSelectedSubject] = useState("USA");
+
+  const handleSubjectChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSubject(e.target.value);
+  };
+
   return (
     <ShowcaseSection title="Contact Form" className="!p-6.5">
       <form action="#">
@@ -47,6 +57,9 @@ export function ContactForm() {
             { label: "United Kingdom", value: "UK" },
             { label: "Canada", value: "Canada" },
           ]}
+          name="contactSubject"
+          value={selectedSubject}
+          onChange={handleSubjectChange}
         />
 
         <TextAreaGroup label="Message" placeholder="Type your message" />

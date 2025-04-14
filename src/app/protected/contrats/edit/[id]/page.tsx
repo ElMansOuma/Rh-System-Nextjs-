@@ -71,7 +71,7 @@ export default function EditContratPage() {
 
         // Définir l'URL du document actuel
         if (data.id) {
-          setCurrentDocumentUrl(`http://localhost:8080/api/contrats/${data.id}/document`);
+          setCurrentDocumentUrl(`http://3.67.202.103:8080/api/contrats/${data.id}/document`);
         }
 
         setErrorMessage(null);

@@ -132,9 +132,9 @@ export default function SignupWithPassword() {
 
         <div className="ml-1">
           <span>
-            J'accepte les{" "}
+            J{"'"}accepte les{" "}
             <Link href="/terms" className="text-primary">
-             Conditions d'utilisation
+             Conditions d{"'"}utilisation
             </Link>{" "}
             et{" "}
             <Link href="/privacy" className="text-primary">

@@ -43,7 +43,7 @@ export default function ProtectedLayout({ children }: PropsWithChildren) {
       <div className="flex h-screen items-center justify-center bg-gray-2 dark:bg-[#020d1a]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-lg font-medium text-gray-600 dark:text-gray-400">Vérification de l'authentification...</p>
+          <p className="mt-4 text-lg font-medium text-gray-600 dark:text-gray-400">Vérification de l{"'"}authentification...</p>
         </div>
       </div>
     );

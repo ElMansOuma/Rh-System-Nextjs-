@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+"use client";
 
+import { useState } from "react";
 import { GlobeIcon } from "@/assets/icons";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DatePickerOne from "@/components/FormElements/DatePicker/DatePickerOne";
@@ -13,11 +14,13 @@ import { Select } from "@/components/FormElements/select";
 import { Switch } from "@/components/FormElements/switch";
 import { ShowcaseSection } from "@/components/Layouts/showcase-section";
 
-export const metadata: Metadata = {
-  title: "Form Elements",
-};
-
 export default function FormElementsPage() {
+  const [selectedCountry, setSelectedCountry] = useState("USA");
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCountry(e.target.value);
+  };
+
   return (
     <>
       <Breadcrumb pageName="Form Elements" />
@@ -108,6 +111,9 @@ export default function FormElementsPage() {
               ]}
               defaultValue="USA"
               prefixIcon={<GlobeIcon />}
+              name="country"
+              value={selectedCountry}
+              onChange={handleCountryChange}
             />
             <MultiSelect id="multiSelect" />
           </ShowcaseSection>

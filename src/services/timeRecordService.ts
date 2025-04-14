@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/pointages';
+const API_BASE_URL = 'http://3.67.202.103:8080';
+const API_URL = `${API_BASE_URL}/api`;
 
 export interface TimeRecordDTO {
   id?: number;

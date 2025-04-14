@@ -50,7 +50,7 @@ export default function EditCollaborateurPage() {
 
         // Définir l'URL de la photo actuelle
         if (data.id) {
-          setCurrentPhotoUrl(`http://localhost:8080/api/collaborateurs/${data.id}/photo`);
+          setCurrentPhotoUrl(`http://3.67.202.103:8080/api/collaborateurs/${data.id}/photo`);
         }
 
         setErrorMessage(null);
@@ -190,13 +190,15 @@ export default function EditCollaborateurPage() {
                   className="rounded-full object-cover"
                 />
               ) : currentPhotoUrl ? (
-                <img
-                  src={currentPhotoUrl}
+                <Image
+                  src={currentPhotoUrl || '/placeholder-profile.png'}
                   alt="Profile"
-                  className="w-full h-full rounded-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-profile.png'; // Image de secours
+                  width={100} // Specify appropriate dimensions
+                  height={100}
+                  className="rounded-full object-cover"
+                  onError={() => {
+                    // Note: Next/Image handles errors differently
+                    // This might not be needed with Next/Image
                   }}
                 />
               ) : (

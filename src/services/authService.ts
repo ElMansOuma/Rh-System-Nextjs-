@@ -28,7 +28,7 @@ const AuthService = {
   login: async (credentials: LoginData): Promise<AuthResponse> => {
     try {
       console.log("Tentative de connexion avec:", credentials);
-      const response = await apiClient.post('/admins/login', {
+      const response = await apiClient.post('/api/admins/login', {
         email: credentials.email,
         password: credentials.password
       });
@@ -51,7 +51,7 @@ const AuthService = {
   register: async (userData: RegisterData): Promise<AuthResponse> => {
     try {
       console.log("Tentative d'inscription avec:", userData);
-      const response = await apiClient.post('/admins/register', userData);
+      const response = await apiClient.post('/api/admins/register', userData);
 
       console.log("Réponse d'inscription:", response.data);
 

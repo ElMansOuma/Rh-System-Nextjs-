@@ -420,7 +420,7 @@ export default function EditAbsencePage() {
 
         {/* Informations de période d'absence */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Période d'absence</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Période d{"'"}absence</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -567,7 +567,7 @@ export default function EditAbsencePage() {
                   <p className="pl-1">ou glissez-déposez</p>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  PNG, JPG, PDF jusqu'à 10MB
+                  PNG, JPG, PDF jusqu{"'"}à 10MB
                 </p>
                 {justificatif && (
                   <p className="text-sm text-green-600 dark:text-green-400 font-medium">

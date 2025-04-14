@@ -516,7 +516,7 @@ export default function AddRetardPage() {
                   <li>Un retard est considéré à partir de 09:30</li>
                   <li>Trois retards dans le mois déclenchent un avertissement</li>
                   <li>Une justification valide est obligatoire</li>
-                  <li>Les retards pour cause de transport en commun doivent être accompagnés d'un justificatif</li>
+                  <li>Les retards pour cause de transport en commun doivent être accompagnés d{"'"}un justificatif</li>
                 </ul>
               </div>
             </div>
@@ -570,7 +570,7 @@ export default function AddRetardPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Heure prévue d'arrivée *
+                  Heure prévue d{"'"}arrivée *
                 </label>
                 <div className="relative">
                   <Input
@@ -587,7 +587,7 @@ export default function AddRetardPage() {
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Heure réelle d'arrivée *
+                  Heure réelle d{"'"}arrivée *
                 </label>
                 <div className="relative">
                   <Input

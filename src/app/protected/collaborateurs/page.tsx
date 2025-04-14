@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Image from 'next/image';
 import {
   Table,
   TableBody,
@@ -282,13 +283,16 @@ export default function CollaborateursPage() {
                   <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
                       {collaborateur.id ? (
-                        <img
-                          src={`http://localhost:8080/api/collaborateurs/${collaborateur.id}/photo`}
+                        <Image
+                          src={`http://3.67.202.103:8080/api/collaborateurs/${collaborateur.id}/photo`}
                           alt={`${collaborateur.prenom} ${collaborateur.nom}`}
+                          width={500} // Set appropriate dimensions
+                          height={500} // Set appropriate dimensions
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder-profile.png'; // Fallback image
+                          onError={(error) => {
+                            // Note: Next.js Image handles errors differently
+                            // Use this if you're using Next.js 13+
+                            error.currentTarget.src = '/placeholder-profile.png';
                           }}
                         />
                       ) : (

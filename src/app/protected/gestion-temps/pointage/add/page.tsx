@@ -191,7 +191,7 @@ export default function AddPointagePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Heure d'entrée *
+                  Heure d{"'"}entrée *
                 </label>
                 <div className="relative">
                   <Input
@@ -225,7 +225,7 @@ export default function AddPointagePage() {
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Total d'heures
+                  Total d{"'"}heures
                 </label>
                 <Input
                   type="text"

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import contratService from '@/services/contratService';
 import collaborateurService from '@/services/collaborateurService';
@@ -355,15 +356,20 @@ export default function ContratDetailPage() {
                   <div
                     className="w-32 h-32 rounded-full overflow-hidden mb-3 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                     {collaborateur.id ? (
-                      <img
-                        src={`http://localhost:8080/api/collaborateurs/${collaborateur.id}/photo`}
-                        alt={`${collaborateur.prenom} ${collaborateur.nom}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/placeholder-profile.png';
-                        }}
-                      />
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={`http://3.67.202.103:8080/api/collaborateurs/${collaborateur.id}/photo`}
+                          alt={`${collaborateur.prenom} ${collaborateur.nom}`}
+                          fill
+                          sizes="100%"
+                          className="object-cover"
+                          onError={(e) => {
+                            // For Next.js Image error handling
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-profile.png';
+                          }}
+                        />
+                      </div>
                     ) : (
                       <User className="w-16 h-16 text-gray-400" />
                     )}
