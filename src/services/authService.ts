@@ -69,18 +69,25 @@ const AuthService = {
   },
 
   logout: (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
   },
 
   getCurrentUser: (): any => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) return JSON.parse(userStr);
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      if (userStr) return JSON.parse(userStr);
+    }
     return null;
   },
 
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('token');
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem('token');
+    }
+    return false;
   }
 };
 

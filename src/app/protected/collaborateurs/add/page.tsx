@@ -8,7 +8,6 @@ import collaborateurService, { Collaborateur } from '@/services/collaborateurSer
 import InputGroup from '@/components/FormElements/InputGroup';
 import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
 import { Select } from "@/components/FormElements/select";
-import Link from "next/link";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
@@ -28,11 +27,34 @@ export default function Page() {
     situationEntreprise: '',
   });
 
+  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+
+    // Validation pour les champs numériques
+    if (name === 'nombrePersonnesACharge' || name === 'nombreAnneeExperience') {
+      const numValue = Number(value);
+
+      // Vérifier si la valeur est négative
+      if (numValue < 0) {
+        setFormErrors(prev => ({
+          ...prev,
+          [name]: `La valeur pour ${name === 'nombrePersonnesACharge' ? 'personnes à charge' : 'années d\'expérience'} ne peut pas être négative`
+        }));
+        return;
+      } else {
+        // Effacer l'erreur si la valeur est valide
+        setFormErrors(prev => {
+          const newErrors = {...prev};
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -45,9 +67,52 @@ export default function Page() {
     }
   };
 
+  // Validation avant soumission
+  const validateForm = (): boolean => {
+    let isValid = true;
+    const newErrors: {[key: string]: string} = {};
+
+    // Validation pour les champs numériques
+    if (formData.nombrePersonnesACharge !== undefined && formData.nombrePersonnesACharge < 0) {
+      newErrors.nombrePersonnesACharge = "Le nombre de personnes à charge ne peut pas être négatif";
+      isValid = false;
+    }
+
+    if (formData.nombreAnneeExperience !== undefined && formData.nombreAnneeExperience < 0) {
+      newErrors.nombreAnneeExperience = "Le nombre d'années d'expérience ne peut pas être négatif";
+      isValid = false;
+    }
+
+    // Validation de l'email
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Veuillez entrer une adresse email valide";
+      isValid = false;
+    }
+
+    // Validation de la date de naissance (pas dans le futur)
+    if (formData.dateNaissance) {
+      const birthDate = new Date(formData.dateNaissance);
+      const today = new Date();
+      if (birthDate > today) {
+        newErrors.dateNaissance = "La date de naissance ne peut pas être dans le futur";
+        isValid = false;
+      }
+    }
+
+    setFormErrors(newErrors);
+    return isValid;
+  };
+
   // Add Collaborator Form
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Valider le formulaire avant soumission
+    if (!validateForm()) {
+      toast.error('Veuillez corriger les erreurs dans le formulaire');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage(null);
 
@@ -109,21 +174,29 @@ export default function Page() {
     { value: 'Freelance', label: 'Freelance' }
   ];
 
+  // Fonction pour afficher une erreur sous un champ
+  const renderError = (fieldName: string) => {
+    if (formErrors[fieldName]) {
+      return (
+        <p className="text-red-500 text-xs mt-1">{formErrors[fieldName]}</p>
+      );
+    }
+    return null;
+  };
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Nouvel en-tête de page au format demandé */}
+      {/* En-tête de page */}
       <div className="mb-6">
-
         <h1 className="text-2xl font-bold">
           <Button
-          variant="outline"
-          onClick={() => router.push('/protected/collaborateurs')}
-          className="mr-4 text-gray-600 dark:text-gray-300"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-        </Button>
-          Ajouter un Collaborateur</h1>
-
+            variant="outline"
+            onClick={() => router.push('/protected/collaborateurs')}
+            className="mr-4 text-gray-600 dark:text-gray-300"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+          </Button>
+          Ajouter un collaborateur
+        </h1>
       </div>
 
       {errorMessage && (
@@ -133,117 +206,124 @@ export default function Page() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Photo Upload Section */}
+        {/* Section Information Personnelle avec photo à gauche */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-          <div className="flex justify-center">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-              id="photoUpload"
-            />
-            <label
-              htmlFor="photoUpload"
-              className="w-40 h-40 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center cursor-pointer transition-all hover:bg-gray-200 dark:hover:bg-gray-600"
-            >
-              {profilePhoto ? (
-                <Image
-                  src={URL.createObjectURL(profilePhoto)}
-                  alt="Profile"
-                  width={160}
-                  height={160}
-                  className="rounded-full object-cover"
-                />
-              ) : (
-                <div className="text-gray-500 dark:text-gray-400 text-center text-sm px-4">
-                  <div className="mb-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                    </svg>
-                  </div>
-                  Cliquez pour parcourir ou glisser-déposer une photo
-                </div>
-              )}
-            </label>
-          </div>
-        </div>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Informations Personnelles</h2>
 
-        {/* Personal Base Information */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Informations Personnelles de Base</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InputGroup
-              name="matricule"
-              label="Matricule"
-              type="text"
-              placeholder="Entrez le matricule"
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              value={formData.matricule || ''}
-              handleChange={handleInputChange}
-            />
-            <InputGroup
-              name="prenom"
-              label="Prénom"
-              type="text"
-              placeholder="Entrez le prénom"
-              required
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              value={formData.prenom}
-              handleChange={handleInputChange}
-            />
-            <InputGroup
-              name="nom"
-              label="Nom"
-              type="text"
-              placeholder="Entrez le nom"
-              required
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              value={formData.nom}
-              handleChange={handleInputChange}
-            />
-
-            {/* Use updated Select component with proper value/onChange */}
-            <Select
-              label="Sexe"
-              name="sexe"
-              items={sexeOptions}
-              value={formData.sexe}
-              onChange={handleInputChange}
-              className="dark:bg-gray-700 dark:text-white"
-            />
-
-            <InputGroup
-              name="cin"
-              label="CIN"
-              type="text"
-              placeholder="Entrez le CIN"
-              required
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              value={formData.cin}
-              handleChange={handleInputChange}
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Date de Naissance</label>
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Partie gauche - Photo */}
+            <div className="w-full md:w-1/4 flex flex-col items-center">
               <input
-                type="date"
-                name="dateNaissance"
-                value={formData.dateNaissance}
-                onChange={handleInputChange}
-                required
-                className="w-full rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="hidden"
+                id="photoUpload"
               />
+              <label
+                htmlFor="photoUpload"
+                className="w-40 h-40 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center cursor-pointer transition-all hover:bg-gray-200 dark:hover:bg-gray-600 mb-3"
+              >
+                {profilePhoto ? (
+                  <Image
+                    src={URL.createObjectURL(profilePhoto)}
+                    alt="Profile"
+                    width={160}
+                    height={160}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="text-gray-500 dark:text-gray-400 text-center text-sm px-4">
+                    <div className="mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                      </svg>
+                    </div>
+                    Cliquez pour ajouter une photo
+                  </div>
+                )}
+              </label>
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                Photo du collaborateur
+              </p>
             </div>
 
-            <Select
-              label="Statut"
-              name="status"
-              items={statutOptions}
-              value={formData.status}
-              onChange={handleInputChange}
-              className="dark:bg-gray-700 dark:text-white"
-            />
+            {/* Partie droite - Informations de base */}
+            <div className="w-full md:w-3/4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <InputGroup
+                  name="matricule"
+                  label="Matricule"
+                  type="text"
+                  placeholder="Entrez le matricule"
+                  className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  value={formData.matricule || ''}
+                  handleChange={handleInputChange}
+                />
+                <InputGroup
+                  name="prenom"
+                  label="Prénom"
+                  type="text"
+                  placeholder="Entrez le prénom"
+                  required
+                  className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  value={formData.prenom}
+                  handleChange={handleInputChange}
+                />
+                <InputGroup
+                  name="nom"
+                  label="Nom"
+                  type="text"
+                  placeholder="Entrez le nom"
+                  required
+                  className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  value={formData.nom}
+                  handleChange={handleInputChange}
+                />
+
+                <Select
+                  label="Sexe"
+                  name="sexe"
+                  items={sexeOptions}
+                  value={formData.sexe}
+                  onChange={handleInputChange}
+                  className="dark:bg-gray-700 dark:text-white"
+                />
+
+                <InputGroup
+                  name="cin"
+                  label="CIN"
+                  type="text"
+                  placeholder="Entrez le CIN"
+                  required
+                  className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  value={formData.cin}
+                  handleChange={handleInputChange}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Date de Naissance</label>
+                  <input
+                    type="date"
+                    name="dateNaissance"
+                    value={formData.dateNaissance}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+                  />
+                  {renderError('dateNaissance')}
+                </div>
+
+                <Select
+                  label="Statut"
+                  name="status"
+                  items={statutOptions}
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -251,16 +331,19 @@ export default function Page() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Coordonnées</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InputGroup
-              name="email"
-              label="Email"
-              type="email"
-              placeholder="Entrez l'email"
-              required
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              value={formData.email}
-              handleChange={handleInputChange}
-            />
+            <div>
+              <InputGroup
+                name="email"
+                label="Email"
+                type="email"
+                placeholder="Entrez l'email"
+                required
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                value={formData.email}
+                handleChange={handleInputChange}
+              />
+              {renderError('email')}
+            </div>
             <InputGroup
               name="telephone"
               label="Numéro de Téléphone"
@@ -295,15 +378,20 @@ export default function Page() {
               onChange={handleInputChange}
               className="dark:bg-gray-700 dark:text-white"
             />
-            <InputGroup
-              name="nombrePersonnesACharge"
-              label="Nombre de Personnes à Charge (Enfants)"
-              type="number"
-              placeholder="Entrez le nombre"
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              value={formData.nombrePersonnesACharge?.toString() || ''}
-              handleChange={handleInputChange}
-            />
+            <div>
+              <InputGroup
+                name="nombrePersonnesACharge"
+                label="Nombre de Personnes à Charge (Enfants)"
+                type="number"
+                placeholder="Entrez le nombre"
+                min="0"
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                value={formData.nombrePersonnesACharge?.toString() || ''}
+                handleChange={handleInputChange}
+              />
+              {renderError('nombrePersonnesACharge')}
+            </div>
+
             <InputGroup
               name="cnss"
               label="CNSS"
@@ -320,15 +408,19 @@ export default function Page() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Détails Professionnels</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InputGroup
-              name="nombreAnneeExperience"
-              label="Nombre d'Années d'Expérience"
-              type="number"
-              placeholder="Entrez le nombre d'années"
-              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              value={formData.nombreAnneeExperience?.toString() || ''}
-              handleChange={handleInputChange}
-            />
+            <div>
+              <InputGroup
+                name="nombreAnneeExperience"
+                label="Nombre d'Années d'Expérience"
+                type="number"
+                placeholder="Entrez le nombre d'années"
+                min="0"
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                value={formData.nombreAnneeExperience?.toString() || ''}
+                handleChange={handleInputChange}
+              />
+              {renderError('nombreAnneeExperience')}
+            </div>
             <Select
               label="Niveau de Qualification ou Diplôme Obtenu"
               name="niveauQualification"
@@ -357,8 +449,6 @@ export default function Page() {
               value={formData.rib || ''}
               handleChange={handleInputChange}
             />
-
-
           </div>
 
           <div className="mt-4">

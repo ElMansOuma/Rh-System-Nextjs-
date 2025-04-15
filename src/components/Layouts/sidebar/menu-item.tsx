@@ -19,13 +19,25 @@ const menuItemBaseStyles = cva(
   },
 );
 
-export function MenuItem(
-  props: {
-    className?: string;
-    children: React.ReactNode;
-    isActive: boolean;
-  } & ({ as?: "button"; onClick: () => void } | { as: "link"; href: string }),
-) {
+type MenuItemCommonProps = {
+  className?: string;
+  children: React.ReactNode;
+  isActive: boolean;
+};
+
+type MenuItemButtonProps = MenuItemCommonProps & {
+  as?: "button";
+  onClick: () => void;
+};
+
+type MenuItemLinkProps = MenuItemCommonProps & {
+  as: "link";
+  href: string;
+};
+
+type MenuItemProps = MenuItemButtonProps | MenuItemLinkProps;
+
+export function MenuItem(props: MenuItemProps) {
   const { toggleSidebar, isMobile } = useSidebarContext();
 
   if (props.as === "link") {
@@ -49,7 +61,7 @@ export function MenuItem(
 
   return (
     <button
-      onClick={props.onClick}
+      onClick={(props as MenuItemButtonProps).onClick}
       aria-expanded={props.isActive}
       className={menuItemBaseStyles({
         isActive: props.isActive,

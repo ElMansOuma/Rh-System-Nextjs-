@@ -111,29 +111,6 @@ const InfoField: React.FC<{
   );
 };
 
-
-// Composant pour les statistiques avec style de carte
-const StatCard: React.FC<{
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  color: string;
-}> = ({ title, value, icon, color }) => {
-  return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md border-l-4 ${color} transition-all duration-200 hover:shadow-lg`}>
-      <div className="flex justify-between">
-        <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-        </div>
-        <div className={`h-12 w-12 rounded-full flex items-center justify-center ${color.replace('border', 'bg').replace('-500', '-100').replace('-600', '-900/20')} ${color.replace('border', 'text').replace('-600', '-400')}`}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Fonction utilitaire pour calculer le nombre de jours entre deux dates
 const calculateDaysBetween = (startDate: string, endDate: string): number => {
   const start = new Date(startDate);
@@ -169,53 +146,93 @@ const AbsencesDashboard: React.FC<{
   // Calculer l'année en cours
   const currentYear = new Date().getFullYear();
 
+  // Obtenir les années uniques des absences
+  const getUniqueYears = () => {
+    const years = absences.map(absence => new Date(absence.dateDebut).getFullYear());
+    return [...new Set(years)].sort((a, b) => b - a); // Trier par ordre décroissant
+  };
+
+  const uniqueYears = getUniqueYears();
+
+  // Fonction pour formater une date au format français
+  const formatDateFr = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  // Obtenir le nom du mois en français
+  const getMonthName = (date: Date): string => {
+    return date.toLocaleDateString('fr-FR', { month: 'long' });
+  };
+
   // Calculer les statistiques des absences
   const calculateAbsenceStats = () => {
     // Initialiser les statistiques
     const stats = {
-      totalDaysThisYear: 0,
-      totalAbsencesThisYear: 0,
       absencesByMotif: {} as Record<string, number>,
-      absencesByMonth: Array(12).fill(0),
-      absencesByStatus: {
-        'En attente': 0,
-        'Approuvée': 0,
-        'Rejetée': 0,
-      },
-      longestAbsence: 0
+      absencesByYear: {} as Record<number, {
+        days: number,
+        motifs: Record<string, number>,
+        absences: Array<{
+          dateDebut: string,
+          dateFin: string,
+          mois: string,
+          motif: string,
+          jours: number
+        }>
+      }>,
     };
+
+    // Initialiser les absences par année pour toutes les années disponibles
+    uniqueYears.forEach(year => {
+      stats.absencesByYear[year] = {
+        days: 0,
+        motifs: {},
+        absences: []
+      };
+    });
 
     // Analyser chaque absence
     absences.forEach(absence => {
       const startDate = new Date(absence.dateDebut);
       const endDate = new Date(absence.dateFin);
       const year = startDate.getFullYear();
+      const month = getMonthName(startDate);
 
       // Calculer la durée de l'absence en jours ouvrables uniquement
       const daysCount = calculateDaysBetween(absence.dateDebut, absence.dateFin);
 
-      // Le reste du code reste inchangé
-      if (daysCount > stats.longestAbsence) {
-        stats.longestAbsence = daysCount;
+      // Compter par année
+      if (!stats.absencesByYear[year]) {
+        stats.absencesByYear[year] = {
+          days: 0,
+          motifs: {},
+          absences: []
+        };
       }
 
-      // Statistiques pour l'année en cours
-      if (year === currentYear) {
-        stats.totalDaysThisYear += daysCount;
-        stats.totalAbsencesThisYear++;
-        // Compter par mois (pour l'année en cours)
-        const month = startDate.getMonth();
-        stats.absencesByMonth[month] += daysCount;
-      }
+      stats.absencesByYear[year].days += daysCount;
 
-      // Compter par motif
+      // Ajouter les détails de l'absence
+      stats.absencesByYear[year].absences.push({
+        dateDebut: formatDateFr(absence.dateDebut),
+        dateFin: formatDateFr(absence.dateFin),
+        mois: month,
+        motif: absence.motif,
+        jours: daysCount
+      });
+
+      // Compter par motif dans l'année
+      if (!stats.absencesByYear[year].motifs[absence.motif]) {
+        stats.absencesByYear[year].motifs[absence.motif] = 0;
+      }
+      stats.absencesByYear[year].motifs[absence.motif] += daysCount;
+
+      // Compter tous les motifs
       if (!stats.absencesByMotif[absence.motif]) {
         stats.absencesByMotif[absence.motif] = 0;
       }
       stats.absencesByMotif[absence.motif] += daysCount;
-
-      // Compter par statut
-      stats.absencesByStatus[absence.status] += daysCount;
     });
 
     return stats;
@@ -223,109 +240,102 @@ const AbsencesDashboard: React.FC<{
 
   const stats = calculateAbsenceStats();
 
-  // Obtenir les données de motif pour l'affichage
-  const motifEntries = Object.entries(stats.absencesByMotif);
-  motifEntries.sort((a, b) => b[1] - a[1]); // Trier par nombre de jours décroissant
-
-  // Noms des mois en français
-  const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  // Obtenir les données d'absence par année pour l'affichage
+  const yearEntries = Object.entries(stats.absencesByYear);
+  yearEntries.sort((a, b) => Number(b[0]) - Number(a[0])); // Trier par année décroissante
 
   return (
     <>
-      {/* Cartes de statistiques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Total jours d'absence (année courante)"
-          value={stats.totalDaysThisYear}
-          icon={<Calendar className="h-6 w-6" />}
-          color="border-blue-500 dark:border-blue-600"
-        />
-        <StatCard
-          title="Nombre d'absences (année courante)"
-          value={stats.totalAbsencesThisYear}
-          icon={<Clock className="h-6 w-6" />}
-          color="border-green-500 dark:border-green-600"
-        />
-        <StatCard
-          title="En attente de validation"
-          value={stats.absencesByStatus['En attente']}
-          icon={<AlertCircle className="h-6 w-6" />}
-          color="border-yellow-500 dark:border-yellow-600"
-        />
-        <StatCard
-          title="Plus longue absence (jours)"
-          value={stats.longestAbsence}
-          icon={<BarChart2 className="h-6 w-6" />}
-          color="border-purple-500 dark:border-purple-600"
-        />
-      </div>
+      {/* Absences par année - format de tableau détaillé */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md mb-6">
+        <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white flex items-center">
+          <Calendar className="h-5 w-5 mr-2 text-blue-500" />
+          Absences par année
+        </h3>
 
-      {/* Graphiques et analyses détaillées */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Distribution par mois */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md">
-          <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white flex items-center">
-            <BarChart2 className="h-5 w-5 mr-2 text-blue-500" />
-            Jours d{"'"}absences par mois ({currentYear})
-          </h3>
-
-          <div className="h-48 overflow-hidden">
-            <div className="flex items-end h-40 gap-1">
-              {stats.absencesByMonth.map((days, index) => (
-                <div key={index} className="flex flex-col items-center flex-grow">
-                  <div className="relative w-full group">
-                    <div
-                      className="w-full bg-blue-200 dark:bg-blue-900/30 hover:bg-blue-300 dark:hover:bg-blue-800/50 rounded-t transition-all duration-200"
-                      style={{
-                        height: `${days > 0 ? Math.max(days * 4, 4) : 0}px`,
-                        maxHeight: '100%'
-                      }}
-                    ></div>
-                    {days > 0 && (
-                      <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        {days} jr{days > 1 ? 's' : ''}
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-xs mt-1 text-gray-500 dark:text-gray-400">{monthNames[index].substring(0, 3)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Distribution par motif */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md">
-          <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white flex items-center">
-            <PieChart className="h-5 w-5 mr-2 text-green-500" />
-            Répartition par motif
-          </h3>
-          <div className="space-y-3">
-            {motifEntries.length > 0 ? (
-              motifEntries.map(([motif, days], index) => (
-                <div key={index}>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{motif}</span>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{days} jour{days > 1 ? 's' : ''}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        index % 4 === 0 ? 'bg-blue-500 dark:bg-blue-600' :
-                          index % 4 === 1 ? 'bg-green-500 dark:bg-green-600' :
-                            index % 4 === 2 ? 'bg-purple-500 dark:bg-purple-600' :
-                              'bg-yellow-500 dark:bg-yellow-600'
-                      }`}
-                      style={{ width: `${(days / Object.values(stats.absencesByMotif).reduce((a, b) => a + b, 0)) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4">Aucune donnée disponible</p>
-            )}
-          </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-gray-50 dark:bg-gray-700">
+              <TableRow className="dark:border-gray-600">
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Année
+                </TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Période
+                </TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Mois
+                </TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Motif
+                </TableHead>
+                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Jours d{"'"}absence
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {yearEntries.length > 0 ? (
+                yearEntries.flatMap(([year, yearData], yearIndex) => (
+                  yearData.absences.length > 0 ? (
+                    yearData.absences.map((absence, absenceIndex) => (
+                      <TableRow
+                        key={`${year}-${absenceIndex}`}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors"
+                      >
+                        <TableCell className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                          {absenceIndex === 0 ? (
+                            <>
+                              {year}
+                              {Number(year) === currentYear && (
+                                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                  Année courante
+                                </span>
+                              )}
+                            </>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                          {absence.dateDebut} - {absence.dateFin}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                          {absence.mois}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                            {absence.motif}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                          {absence.jours} jour{absence.jours > 1 ? 's' : ''}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow key={year} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600">
+                      <TableCell className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                        {year}
+                        {Number(year) === currentYear && (
+                          <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            Année courante
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell colSpan={4} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                        Aucune absence pour cette année
+                      </TableCell>
+                    </TableRow>
+                  )
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                    Aucune donnée disponible
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </>
@@ -632,6 +642,7 @@ export default function CollaborateurDetailPage() {
           </div>
         </div>
       )}
+
       {/* Informations du collaborateur */}
       {collaborateur && (
         <>

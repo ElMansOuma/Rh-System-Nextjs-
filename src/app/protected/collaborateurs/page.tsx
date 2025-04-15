@@ -182,12 +182,12 @@ export default function CollaborateursPage() {
       />
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Liste des Collaborateurs</h1>
+        <h1 className="text-2xl font-bold">Liste des collaborateurs</h1>
         <Link
           href="/protected/collaborateurs/add"
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-          Ajouter un Collaborateur
+          Ajouter un collaborateur
         </Link>
       </div>
 

@@ -12,80 +12,50 @@ import {
 export interface NavItem {
   title: string;
   url?: string;
-  icon?: React.ComponentType;
+  icon?: React.ComponentType<any>;
   items?: NavItem[];
-  onClick?: () => void; // Ajout d'une propriété onClick
-
+  onClick?: () => void;
 }
-const handleLogout = () => {
-  // Supprimer le token d'authentification du localStorage ou sessionStorage
-  localStorage.removeItem('authToken'); // Ajustez selon votre mécanisme de stockage
 
-  // Vous pourriez également avoir besoin d'appeler une API pour invalider le token côté serveur
-  // fetch('/api/logout', { method: 'POST' });
+// Define the type for a navigation section
+export interface NavSection {
+  label: string;
+  items: NavItem[];
+}
 
-  // Rediriger vers la page de connexion
-  window.location.href = "/public/auth/sign-in";
-};
-export const NAV_DATA = [
+export const NAV_DATA: NavSection[] = [
   {
     label: "MAIN MENU",
     items: [
-
       {
         title: "Tableau de bord",
         icon: HomeIcon,
         url: "/test",
-        items: [],
+        items: [] as NavItem[],
       },
       {
         title: "Collaborateurs",
         url: "/protected/collaborateurs",
         icon: UserIcon,
-        items: [],
+        items: [] as NavItem[],
       },
       {
         title: "Contrats",
         url: "/protected/contrats",
         icon: TableIcon,
-        items: [
-        ],
+        items: [] as NavItem[],
       },
       {
-        title: "Gestion Temps",
-        url: "/protected/gestion-temps",
+        title: "Absences",
+        url: "/protected/gestion-temps/abscence",
         icon: CalendarIcon,
-        items: [
-          {
-            title: "absences",
-            url: "/protected/gestion-temps/abscence",
-          },
-        ],
+        items: [] as NavItem[],
       },
-
-
       {
         title: "Paramètres",
         icon: SettingsIcon,
-        items: [
-          {
-            title: "Paramètres du Compte",
-            url: "/protected/pages/settings",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    label: "AUTRES",
-
-    items: [
-      {
-        title: "Déconnexion",
-        url: "#", // URL fictive, l'action sera gérée par onClick
-        icon: LogOutIcon,
-        onClick: handleLogout, // Ajout de la fonction de déconnexion
-        items: [],
+        url: "/protected/pages/settings",
+        items: [] as NavItem[],
       },
     ],
   },

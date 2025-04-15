@@ -7,9 +7,6 @@ import absenceService, { Absence } from '@/services/absenceService';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import InputGroup from '@/components/FormElements/InputGroup';
 import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
 import { Select } from "@/components/FormElements/select";
 
@@ -49,7 +46,6 @@ export default function AddAbsencePage() {
     dateDebut: '',
     dateFin: '',
     motif: '',
-    status: 'En attente',
     observations: '',
   });
 
@@ -218,18 +214,15 @@ export default function AddAbsencePage() {
   const motifOptions = [
     { value: "", label: "Sélectionnez un motif" },
     { value: "Maladie", label: "Maladie" },
-    { value: "Congés payés", label: "Congés payés" },
-    { value: "RTT", label: "RTT" },
     { value: "Événement familial", label: "Événement familial" },
-    { value: "Formation", label: "Formation" },
+    { value: "Congé payé", label: "Congé payé" },
+    { value: "Congé sans solde", label: "Congé sans solde" },
+    { value: "Non justifié", label: "Non justifié" },
     { value: "Autre", label: "Autre" }
+
   ];
 
-  const statusOptions = [
-    { value: "En attente", label: "En attente" },
-    { value: "Approuvée", label: "Approuvée" },
-    { value: "Refusée", label: "Refusée" }
-  ];
+
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -379,16 +372,7 @@ export default function AddAbsencePage() {
               />
             </div>
 
-            <div>
-              <Select
-                label="Statut"
-                name="status"
-                items={statusOptions}
-                value={formData.status || ''}
-                onChange={handleInputChange}
-                className="dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+
 
             <div className="md:col-span-2">
               <TextAreaGroup

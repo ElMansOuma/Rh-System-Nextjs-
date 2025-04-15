@@ -216,12 +216,12 @@ export default function ContratsPage() {
       />
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Liste des Contrats</h1>
+        <h1 className="text-2xl font-bold">Liste des contrats</h1>
         <Link
           href="/protected/contrats/add"
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-          Ajouter un Contrat
+          Ajouter un contrat
         </Link>
       </div>
 

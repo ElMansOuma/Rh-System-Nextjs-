@@ -1,4 +1,3 @@
-// src/app/protected/gestion-temps/abscence/page.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -13,7 +12,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import Link from 'next/link';
-import { Edit, Trash2, Search, Filter, ChevronLeft, ChevronRight, Download, Eye } from "lucide-react";
+import { Edit, Trash2, Search, Filter, ChevronLeft, ChevronRight, Download, Calendar, X } from "lucide-react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from "sonner";
 import absenceService, { Absence } from '@/services/absenceService';
@@ -49,11 +48,23 @@ export default function AbsencesPage() {
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'Tous' | 'En attente' | 'Approuvée' | 'Rejetée'>('Tous');
+  const [motifFilter, setMotifFilter] = useState<string>('Tous');
+  const [yearFilter, setYearFilter] = useState<string>('Tous');
+  const [showFilters, setShowFilters] = useState<boolean>(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Years for filter dropdown
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+
+  // Extract unique motifs for filter
+  const uniqueMotifs = useMemo(() => {
+    const motifs = absences.map(absence => absence.motif);
+    return ['Tous', ...Array.from(new Set(motifs))];
+  }, [absences]);
 
   // Fetch absences
   useEffect(() => {
@@ -94,20 +105,27 @@ export default function AbsencesPage() {
     fetchAbsences();
   }, []);
 
-  // Filtered absences based on search and filter
+  // Filtered absences based on search and filters
   const filteredAbsences = useMemo(() => {
     return absences.filter(absence => {
       const collaborateurName = `${absence.collaborateur?.prenom || ''} ${absence.collaborateur?.nom || ''}`.toLowerCase();
+
+      // Filtre de recherche texte
       const matchesSearch =
         searchTerm === '' ||
         collaborateurName.includes(searchTerm.toLowerCase()) ||
         absence.motif.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === 'Tous' || absence.status === statusFilter;
+      // Filtre par motif
+      const matchesMotif = motifFilter === 'Tous' || absence.motif === motifFilter;
 
-      return matchesSearch && matchesStatus;
+      // Filtre par année
+      const absenceYear = new Date(absence.dateDebut).getFullYear().toString();
+      const matchesYear = yearFilter === 'Tous' || absenceYear === yearFilter;
+
+      return matchesSearch && matchesMotif && matchesYear;
     });
-  }, [absences, searchTerm, statusFilter]);
+  }, [absences, searchTerm, motifFilter, yearFilter]);
 
   // Handle delete absence
   const handleDeleteAbsence = async (id: number) => {
@@ -116,10 +134,41 @@ export default function AbsencesPage() {
         await absenceService.delete(id);
         setAbsences(absences.filter(absence => absence.id !== id));
         toast.success('Absence supprimée avec succès');
+
+        // Update pagination if needed
+        if (paginatedAbsences.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
       } catch (err) {
         console.error('Erreur lors de la suppression de l\'absence:', err);
         toast.error('Impossible de supprimer l\'absence. Veuillez réessayer plus tard.');
       }
+    }
+  };
+
+  // Handle download justificatif
+  const handleDownloadJustificatif = async (id: number) => {
+    try {
+      const blob = await absenceService.downloadJustificatif(id);
+
+      // Trouver l'absence pour obtenir le nom du fichier
+      const absence = absences.find(a => a.id === id);
+      let filename = absence?.justificatifNom || `justificatif-absence-${id}.pdf`;
+
+      // Créer un URL pour le blob et déclencher le téléchargement
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Téléchargement du justificatif réussi');
+    } catch (err) {
+      console.error('Erreur lors du téléchargement du justificatif:', err);
+      toast.error('Impossible de télécharger le justificatif. Veuillez réessayer plus tard.');
     }
   };
 
@@ -147,37 +196,29 @@ export default function AbsencesPage() {
     setCurrentPage(1); // Reset to first page when changing items per page
   };
 
-  // Update absence status
-  const handleUpdateStatus = async (id: number, newStatus: 'En attente' | 'Approuvée' | 'Rejetée') => {
-    try {
-      await absenceService.updateStatus(id, newStatus);
-
-      // Update local state
-      setAbsences(prevAbsences =>
-        prevAbsences.map(absence =>
-          absence.id === id ? { ...absence, status: newStatus } : absence
-        )
-      );
-
-      toast.success(`Statut mis à jour: ${newStatus}`);
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du statut:', error);
-      toast.error('Impossible de mettre à jour le statut.');
-    }
+  // Reset all filters
+  const resetFilters = () => {
+    setSearchTerm('');
+    setMotifFilter('Tous');
+    setYearFilter('Tous');
+    setCurrentPage(1);
   };
 
   // Items per page options
   const itemsPerPageOptions = [5, 10, 15, 20, 30];
 
+  // Vérifie si des filtres sont actifs
+  const hasActiveFilters = motifFilter !== 'Tous' || yearFilter !== 'Tous';
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Absences</h1>
+        <h1 className="text-2xl font-bold">Gestion des absences</h1>
         <Link
           href="/protected/gestion-temps/abscence/add"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-200 shadow-sm"
         >
-          Déclarer une Absence
+          Déclarer une absence
         </Link>
       </div>
 
@@ -188,7 +229,7 @@ export default function AbsencesPage() {
         </div>
       )}
 
-      {/* Search and Filter Section */}
+      {/* Search and Filter Bar */}
       <div className="flex space-x-4 mb-6">
         <div className="relative flex-grow">
           <Input
@@ -204,14 +245,13 @@ export default function AbsencesPage() {
         <div className="w-48">
           <div className="relative">
             <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'Tous' | 'En attente' | 'Approuvée' | 'Rejetée')}
+              value={motifFilter}
+              onChange={(e) => setMotifFilter(e.target.value)}
               className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-700"
             >
-              <option value="Tous">Tous les statuts</option>
-              <option value="En attente">En attente</option>
-              <option value="Approuvée">Approuvée</option>
-              <option value="Rejetée">Rejetée</option>
+              {uniqueMotifs.map((motif, index) => (
+                <option key={index} value={motif}>{motif === 'Tous' ? 'Tous les motifs' : motif}</option>
+              ))}
             </select>
             <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
           </div>
@@ -251,20 +291,19 @@ export default function AbsencesPage() {
               <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date fin</TableHead>
               <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Jours ouvrés</TableHead>
               <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Motif</TableHead>
-              <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Statut</TableHead>
               <TableHead className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                <TableCell colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : paginatedAbsences.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                <TableCell colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   Aucune absence trouvée
                 </TableCell>
               </TableRow>
@@ -288,34 +327,8 @@ export default function AbsencesPage() {
                   <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
                     {absence.motif}
                   </TableCell>
-                  <TableCell className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      absence.status === 'Approuvée'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                        : absence.status === 'En attente'
-                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                    }`}>
-                      {absence.status}
-                    </span>
-                  </TableCell>
                   <TableCell className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex justify-end space-x-2">
-                      {/* Status update dropdown for admin/manager */}
-                      {absence.status === 'En attente' && (
-                        <div className="dropdown">
-                          <select
-                            onChange={(e) => handleUpdateStatus(absence.id!, e.target.value as 'En attente' | 'Approuvée' | 'Rejetée')}
-                            className="h-8 rounded px-2 text-xs border border-gray-300 bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                            defaultValue=""
-                          >
-                            <option value="" disabled>Action</option>
-                            <option value="Approuvée">Approuver</option>
-                            <option value="Rejetée">Rejeter</option>
-                          </select>
-                        </div>
-                      )}
-
                       {/* Edit link */}
                       <Link
                         href={`/protected/gestion-temps/abscence/edit/${absence.id}`}
@@ -323,6 +336,16 @@ export default function AbsencesPage() {
                       >
                         <Edit className="h-4 w-4" />
                       </Link>
+
+                      {/* Download justificatif button */}
+                      {absence.justificatifUrl && (
+                        <button
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-green-600 hover:text-green-800 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/30"
+                          onClick={() => handleDownloadJustificatif(absence.id!)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      )}
 
                       {/* Delete button */}
                       <button
@@ -340,12 +363,12 @@ export default function AbsencesPage() {
         </Table>
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination Controls - style like contrats page */}
       {!loading && totalPages > 0 && (
         <div className="bg-gray-50 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-center items-center">
           <div className="flex items-center space-x-2">
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(1)}
               disabled={currentPage === 1}
               className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -354,7 +377,7 @@ export default function AbsencesPage() {
             </Button>
 
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
@@ -371,7 +394,7 @@ export default function AbsencesPage() {
             </div>
 
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
@@ -380,7 +403,7 @@ export default function AbsencesPage() {
             </Button>
 
             <Button
-              variant="outline"
+              variant="subtle"
               onClick={() => handlePageChange(totalPages)}
               disabled={currentPage === totalPages}
               className="h-8 px-2 py-0 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

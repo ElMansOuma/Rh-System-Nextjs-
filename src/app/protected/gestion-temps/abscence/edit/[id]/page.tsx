@@ -7,7 +7,6 @@ import absenceService, { Absence } from '@/services/absenceService';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 import { toast } from "sonner";
 import { ArrowLeft, FileText, Download } from "lucide-react";
-import InputGroup from '@/components/FormElements/InputGroup';
 import { TextAreaGroup } from '@/components/FormElements/InputGroup/text-area';
 import { Select } from "@/components/FormElements/select";
 
@@ -296,18 +295,14 @@ export default function EditAbsencePage() {
   const motifOptions = [
     { value: "", label: "Sélectionnez un motif" },
     { value: "Maladie", label: "Maladie" },
-    { value: "Congés payés", label: "Congés payés" },
-    { value: "RTT", label: "RTT" },
     { value: "Événement familial", label: "Événement familial" },
-    { value: "Formation", label: "Formation" },
+    { value: "Congé payé", label: "Congé payé" },
+    { value: "Congé sans solde", label: "Congé sans solde" },
+    { value: "Non justifié", label: "Non justifié" },
     { value: "Autre", label: "Autre" }
   ];
 
-  const statusOptions = [
-    { value: "En attente", label: "En attente" },
-    { value: "Approuvée", label: "Approuvée" },
-    { value: "Rejetée", label: "Rejetée" }
-  ];
+
 
   if (isLoading) {
     return (
@@ -480,16 +475,7 @@ export default function EditAbsencePage() {
               />
             </div>
 
-            <div>
-              <Select
-                label="Statut"
-                name="status"
-                items={statusOptions}
-                value={formData.status}
-                onChange={handleInputChange}
-                className="dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+
 
             <div className="md:col-span-2">
               <TextAreaGroup
