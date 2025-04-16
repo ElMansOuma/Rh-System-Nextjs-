@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import absenceService, { Absence } from '@/services/absenceService';
+import absenceService, { Absence, MotifAbsence, motifLibelles } from '@/services/absenceService';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
@@ -40,21 +40,23 @@ export default function AddAbsencePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [motifs, setMotifs] = useState<{value: MotifAbsence | "", label: string}[]>([]);
 
-  const [formData, setFormData] = useState<Omit<Absence, 'status'> & { status?: string }>({
+  const [formData, setFormData] = useState<Absence>({
     collaborateurId: 0,
     dateDebut: '',
     dateFin: '',
-    motif: '',
+    motif: '' as unknown as MotifAbsence, // Ça sera remplacé avant soumission
     observations: '',
   });
 
   const [justificatif, setJustificatif] = useState<File | null>(null);
 
-  // Charger les collaborateurs actifs
+  // Charger les collaborateurs actifs et les motifs d'absence
   useEffect(() => {
-    const fetchCollaborateurs = async () => {
+    const fetchData = async () => {
       try {
+        // Chargement des collaborateurs
         const allCollaborateurs = await collaborateurService.getAll();
         // Filtrer uniquement les collaborateurs actifs
         const activeCollaborateurs = allCollaborateurs.filter(
@@ -62,13 +64,27 @@ export default function AddAbsencePage() {
         );
         setCollaborateurs(activeCollaborateurs);
         setFilteredCollaborateurs(activeCollaborateurs);
+
+        // Chargement des motifs d'absence avec leurs libellés
+        try {
+          const motifOptions = await absenceService.getMotifOptions();
+          setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...motifOptions]);
+        } catch (e) {
+          console.error('Erreur lors du chargement des motifs:', e);
+          // Fallback aux motifs hardcodés
+          const fallbackMotifs = Object.entries(motifLibelles).map(([value, label]) => ({
+            value: value as MotifAbsence,
+            label
+          }));
+          setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...fallbackMotifs]);
+        }
       } catch (error) {
         console.error('Erreur lors du chargement des collaborateurs:', error);
         toast.error('Impossible de charger la liste des collaborateurs.');
       }
     };
 
-    fetchCollaborateurs();
+    fetchData();
   }, []);
 
   // Fermer le dropdown lorsqu'on clique à l'extérieur
@@ -116,7 +132,15 @@ export default function AddAbsencePage() {
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
 
-    if (type === 'number') {
+    if (name === 'motif') {
+      // Vérifier si la valeur est une valeur d'enum valide
+      if (value === "" || Object.keys(motifLibelles).includes(value)) {
+        setFormData({
+          ...formData,
+          [name]: value as unknown as MotifAbsence
+        });
+      }
+    } else if (type === 'number') {
       setFormData({
         ...formData,
         [name]: value ? parseFloat(value) : undefined
@@ -167,8 +191,8 @@ export default function AddAbsencePage() {
       return false;
     }
 
-    // Vérifier que le motif est renseigné
-    if (!formData.motif.trim()) {
+    // Vérifier que le motif est renseigné et est une valeur d'enum valide
+    if (!formData.motif || formData.motif === "" as unknown as MotifAbsence) {
       setErrorMessage('Veuillez saisir un motif d\'absence.');
       return false;
     }
@@ -187,14 +211,20 @@ export default function AddAbsencePage() {
     setErrorMessage(null);
 
     try {
+      // S'assurer que le motif est une valeur d'enum valide
+      if (formData.motif === "" as unknown as MotifAbsence) {
+        throw new Error("Motif d'absence invalide");
+      }
+
       // Préparer les données à envoyer
       const absenceData: Absence = {
-        ...formData as Absence,
+        ...formData,
+        motif: formData.motif as MotifAbsence, // Ici on est sûr que c'est une valeur valide
         justificatif: justificatif
       };
 
-      // Envoyer les données au serveur
-      await absenceService.create(absenceData);
+      // Utiliser le service pour créer l'absence
+      const result = await absenceService.create(absenceData);
 
       // Afficher un message de succès
       toast.success('Absence déclarée avec succès');
@@ -210,23 +240,9 @@ export default function AddAbsencePage() {
     }
   };
 
-  // Liste des motifs d'absence courants
-  const motifOptions = [
-    { value: "", label: "Sélectionnez un motif" },
-    { value: "Maladie", label: "Maladie" },
-    { value: "Événement familial", label: "Événement familial" },
-    { value: "Congé payé", label: "Congé payé" },
-    { value: "Congé sans solde", label: "Congé sans solde" },
-    { value: "Non justifié", label: "Non justifié" },
-    { value: "Autre", label: "Autre" }
-
-  ];
-
-
-
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Nouvel en-tête de page au format demandé */}
+      {/* En-tête de page */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">
           <Button
@@ -283,7 +299,7 @@ export default function AddAbsencePage() {
                       </div>
                       <div className="flex-1">
                         <p className="font-medium dark:text-white">{collab.prenom} {collab.nom}</p>
-                        {collab.titrePosteOccupe  && <p className="text-sm text-gray-500 dark:text-gray-300">{collab.titrePosteOccupe }</p>}
+                        {collab.titrePosteOccupe && <p className="text-sm text-gray-500 dark:text-gray-300">{collab.titrePosteOccupe}</p>}
                       </div>
                     </div>
                   ))}
@@ -365,14 +381,12 @@ export default function AddAbsencePage() {
               <Select
                 label="Motif d'absence*"
                 name="motif"
-                items={motifOptions}
-                value={formData.motif}
+                items={motifs}
+                value={formData.motif as string}
                 onChange={handleInputChange}
                 className="dark:bg-gray-700 dark:text-white"
               />
             </div>
-
-
 
             <div className="md:col-span-2">
               <TextAreaGroup
@@ -427,7 +441,6 @@ export default function AddAbsencePage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   PNG, JPG, PDF jusqu{"'"}à 10MB
                 </p>
-                {"'"}
                 {justificatif && (
                   <p className="text-sm text-green-600 dark:text-green-400 font-medium">
                     Fichier sélectionné: {justificatif.name}

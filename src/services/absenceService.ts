@@ -3,17 +3,35 @@ import axios from 'axios';
 const API_BASE_URL = 'http://3.67.202.103:8080';
 const API_URL = `${API_BASE_URL}/api/absences`;
 
+// Modifié pour correspondre aux constantes de l'enum Java
+export type MotifAbsence =
+  'MALADIE' |
+  'CONGE_PAYE' |
+  'CONGE_SANS_SOLDE' |
+  'FORMATION' |
+  'EVENEMENT_FAMILIAL' |
+  'AUTRE';
+
+// Map pour convertir les noms d'enum en libellés affichables
+export const motifLibelles: Record<MotifAbsence, string> = {
+  'MALADIE': 'Maladie',
+  'CONGE_PAYE': 'Congé payé',
+  'CONGE_SANS_SOLDE': 'Congé sans solde',
+  'FORMATION': 'Formation',
+  'EVENEMENT_FAMILIAL': 'Événement familial',
+  'AUTRE': 'Autre'
+};
+
 export interface Absence {
   id?: number;
   collaborateurId: number;
   dateDebut: string; // format YYYY-MM-DD
   dateFin: string;   // format YYYY-MM-DD
-  motif: string;
-  status: 'En attente' | 'Approuvée' | 'Rejetée';
+  motif: MotifAbsence;
+  observations?: string;
   justificatif?: File | string | null;
   justificatifUrl?: string; // URL pour accéder au justificatif
   justificatifNom?: string; // Nom du fichier justificatif
-  observations?: string;
 }
 
 const absenceService = {
@@ -27,7 +45,8 @@ const absenceService = {
 
     // Si un justificatif est présent, construire l'URL complète
     if (response.data.justificatifUrl) {
-      response.data.justificatifUrl = `${API_BASE_URL}${response.data.justificatifUrl}`;    }
+      response.data.justificatifUrl = `${API_BASE_URL}${response.data.justificatifUrl}`;
+    }
 
     return response.data;
   },
@@ -35,6 +54,21 @@ const absenceService = {
   getByCollaborateur: async (collaborateurId: number) => {
     const response = await axios.get(`${API_URL}/collaborateur/${collaborateurId}`);
     return response.data;
+  },
+
+  getMotifs: async () => {
+    const response = await axios.get(`${API_URL}/motifs`);
+    return response.data;
+  },
+
+  // Obtenir la liste des motifs avec leurs libellés
+  getMotifOptions: async (): Promise<{value: MotifAbsence, label: string}[]> => {
+    const motifs = await absenceService.getMotifs();
+    // Créer des options pour les listes déroulantes
+    return Object.entries(motifLibelles).map(([value, label]) => ({
+      value: value as MotifAbsence,
+      label
+    }));
   },
 
   create: async (absence: Absence) => {
@@ -98,11 +132,11 @@ const absenceService = {
     return axios.delete(`${API_URL}/${id}`);
   },
 
-  updateStatus: async (id: number, status: 'En attente' | 'Approuvée' | 'Rejetée', observations?: string) => {
-    return axios.patch(`${API_URL}/${id}/status`, { status, observations });
+  updateObservations: async (id: number, observations: string) => {
+    return axios.patch(`${API_URL}/${id}/observations`, observations);
   },
 
-  // Nouvelle méthode pour télécharger un justificatif
+  // Méthode pour télécharger un justificatif
   downloadJustificatif: async (absenceId: number) => {
     try {
       const response = await axios.get(`${API_URL}/${absenceId}/justificatif`, {
@@ -113,6 +147,17 @@ const absenceService = {
       console.error('Erreur lors du téléchargement du justificatif:', error);
       throw error;
     }
+  },
+
+  // Helper pour convertir un libellé en valeur d'enum
+  getMotifEnumFromLibelle: (libelle: string): MotifAbsence | undefined => {
+    const entry = Object.entries(motifLibelles).find(([_, value]) => value === libelle);
+    return entry ? entry[0] as MotifAbsence : undefined;
+  },
+
+  // Helper pour obtenir le libellé à partir d'une valeur d'enum
+  getMotifLibelle: (motif: MotifAbsence): string => {
+    return motifLibelles[motif] || motif;
   }
 };
 

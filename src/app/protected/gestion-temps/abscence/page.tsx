@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { Edit, Trash2, Search, Filter, ChevronLeft, ChevronRight, Download, Calendar, X } from "lucide-react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from "sonner";
-import absenceService, { Absence } from '@/services/absenceService';
+import absenceService, { Absence, MotifAbsence, motifLibelles } from "@/services/absenceService";
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 
 // Fonction utilitaire pour calculer les jours ouvrés
@@ -43,6 +43,7 @@ export default function AbsencesPage() {
   const searchParams = useSearchParams();
 
   const [absences, setAbsences] = useState<(Absence & { collaborateur?: Collaborateur, joursOuvres?: number })[]>([]);
+  const [motifs, setMotifs] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,17 +61,17 @@ export default function AbsencesPage() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  // Extract unique motifs for filter
-  const uniqueMotifs = useMemo(() => {
-    const motifs = absences.map(absence => absence.motif);
-    return ['Tous', ...Array.from(new Set(motifs))];
-  }, [absences]);
-
-  // Fetch absences
+  // Fetch absences and motifs
   useEffect(() => {
-    const fetchAbsences = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+
+        // Récupérer la liste des motifs
+        const motifsList = await absenceService.getMotifs();
+        setMotifs(['Tous', ...motifsList]);
+
+        // Récupérer les absences
         const data = await absenceService.getAll();
 
         // Récupérer les informations des collaborateurs pour chaque absence
@@ -95,14 +96,14 @@ export default function AbsencesPage() {
         setAbsences(absencesWithDetails);
         setError(null);
       } catch (err) {
-        console.error('Erreur lors de la récupération des absences:', err);
-        setError('Impossible de charger les absences. Veuillez réessayer plus tard.');
+        console.error('Erreur lors de la récupération des données:', err);
+        setError('Impossible de charger les données. Veuillez réessayer plus tard.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAbsences();
+    fetchData();
   }, []);
 
   // Filtered absences based on search and filters
@@ -249,7 +250,7 @@ export default function AbsencesPage() {
               onChange={(e) => setMotifFilter(e.target.value)}
               className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-700"
             >
-              {uniqueMotifs.map((motif, index) => (
+              {motifs.map((motif, index) => (
                 <option key={index} value={motif}>{motif === 'Tous' ? 'Tous les motifs' : motif}</option>
               ))}
             </select>
@@ -325,7 +326,7 @@ export default function AbsencesPage() {
                     {absence.joursOuvres} jours
                   </TableCell>
                   <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                    {absence.motif}
+                    {motifLibelles[absence.motif as MotifAbsence] || absence.motif}
                   </TableCell>
                   <TableCell className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex justify-end space-x-2">
@@ -363,7 +364,7 @@ export default function AbsencesPage() {
         </Table>
       </div>
 
-      {/* Pagination Controls - style like contrats page */}
+      {/* Pagination Controls */}
       {!loading && totalPages > 0 && (
         <div className="bg-gray-50 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-center items-center">
           <div className="flex items-center space-x-2">

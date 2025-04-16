@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
-import absenceService, { Absence } from '@/services/absenceService';
+import absenceService, { Absence, MotifAbsence } from '@/services/absenceService';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 import { toast } from "sonner";
 import { ArrowLeft, FileText, Download } from "lucide-react";
@@ -17,7 +17,7 @@ const getBusinessDaysCount = (startDate: Date, endDate: Date): number => {
 
   // Boucler à travers chaque jour
   while (currentDate <= endDate) {
-    // Ignorer les weekends (0 = dimanche, 6 = samedi)
+    // Ignorer les weekend (0 = dimanche, 6 = samedi)
     const dayOfWeek = currentDate.getDay();
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
       count++;
@@ -45,13 +45,13 @@ export default function EditAbsencePage() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedCollaborateur, setSelectedCollaborateur] = useState<Collaborateur | null>(null);
+  const [motifs, setMotifs] = useState<MotifAbsence[]>([]);
 
   const [formData, setFormData] = useState<Absence>({
     collaborateurId: 0,
     dateDebut: '',
     dateFin: '',
-    motif: '',
-    status: 'En attente',
+    motif: '' as MotifAbsence,
     observations: '',
   });
 
@@ -74,7 +74,6 @@ export default function EditAbsencePage() {
           dateDebut: absenceData.dateDebut,
           dateFin: absenceData.dateFin,
           motif: absenceData.motif,
-          status: absenceData.status,
           observations: absenceData.observations || '',
         });
 
@@ -102,10 +101,11 @@ export default function EditAbsencePage() {
     fetchAbsenceData();
   }, [absenceId, router]);
 
-  // Charger les collaborateurs actifs
+  // Charger les collaborateurs actifs et les motifs d'absence
   useEffect(() => {
-    const fetchCollaborateurs = async () => {
+    const fetchData = async () => {
       try {
+        // Chargement des collaborateurs
         const allCollaborateurs = await collaborateurService.getAll();
         // Filtrer uniquement les collaborateurs actifs
         const activeCollaborateurs = allCollaborateurs.filter(
@@ -113,13 +113,24 @@ export default function EditAbsencePage() {
         );
         setCollaborateurs(activeCollaborateurs);
         setFilteredCollaborateurs(activeCollaborateurs);
+
+        // Chargement des motifs d'absence
+        try {
+          const motifsResponse = await absenceService.getMotifs();
+          if (Array.isArray(motifsResponse)) {
+            setMotifs(motifsResponse);
+          }
+        } catch (e) {
+          console.error('Erreur lors du chargement des motifs:', e);
+          // Fallback aux motifs hardcodés si nécessaire
+        }
       } catch (error) {
         console.error('Erreur lors du chargement des collaborateurs:', error);
         toast.error('Impossible de charger la liste des collaborateurs.');
       }
     };
 
-    fetchCollaborateurs();
+    fetchData();
   }, []);
 
   // Fermer le dropdown lorsqu'on clique à l'extérieur
@@ -248,7 +259,7 @@ export default function EditAbsencePage() {
     }
 
     // Vérifier que le motif est renseigné
-    if (!formData.motif.trim()) {
+    if (!formData.motif) {
       setErrorMessage('Veuillez saisir un motif d\'absence.');
       return false;
     }
@@ -270,11 +281,11 @@ export default function EditAbsencePage() {
       // Préparer les données à envoyer
       const absenceData: Absence = {
         ...formData,
-        // Si un nouveau justificatif est ajouté, l'utiliser
+        motif: formData.motif as MotifAbsence,
         justificatif: justificatif
       };
 
-      // Envoyer les données au serveur
+      // Utiliser le service pour mettre à jour l'absence
       await absenceService.update(absenceId, absenceData);
 
       // Afficher un message de succès
@@ -291,18 +302,18 @@ export default function EditAbsencePage() {
     }
   };
 
-  // Liste des motifs d'absence courants
-  const motifOptions = [
-    { value: "", label: "Sélectionnez un motif" },
-    { value: "Maladie", label: "Maladie" },
-    { value: "Événement familial", label: "Événement familial" },
-    { value: "Congé payé", label: "Congé payé" },
-    { value: "Congé sans solde", label: "Congé sans solde" },
-    { value: "Non justifié", label: "Non justifié" },
-    { value: "Autre", label: "Autre" }
-  ];
-
-
+  // Utiliser les motifs du service ou tomber sur la liste par défaut
+  const motifOptions = motifs.length > 0
+    ? [{ value: "", label: "Sélectionnez un motif" }, ...motifs.map(motif => ({ value: motif, label: motif }))]
+    : [
+      { value: "", label: "Sélectionnez un motif" },
+      { value: "Maladie", label: "Maladie" },
+      { value: "Événement familial", label: "Événement familial" },
+      { value: "Congé payé", label: "Congé payé" },
+      { value: "Congé sans solde", label: "Congé sans solde" },
+      { value: "Formation", label: "Formation" },
+      { value: "Autre", label: "Autre" }
+    ];
 
   if (isLoading) {
     return (
@@ -475,8 +486,6 @@ export default function EditAbsencePage() {
               />
             </div>
 
-
-
             <div className="md:col-span-2">
               <TextAreaGroup
                 name="observations"
@@ -564,6 +573,7 @@ export default function EditAbsencePage() {
             </div>
           </div>
         </div>
+
         {/* Boutons d'action */}
         <div className="flex justify-end space-x-4">
           <Button

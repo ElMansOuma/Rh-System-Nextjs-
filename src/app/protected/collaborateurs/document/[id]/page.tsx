@@ -139,7 +139,13 @@ const calculateDaysBetween = (startDate: string, endDate: string): number => {
   return count;
 };
 
-// Composant pour la section Dashboard des absences
+// Liste des types de congés payés
+const CONGES_PAYES = ['Congé payé', 'Congé annuel', 'RTT', 'Congé maternité', 'Congé paternité'];
+
+// Liste des types de congés sans solde
+const CONGES_SANS_SOLDE = ['Congé sans solde', 'Absence non justifiée', 'Congé sabbatique'];
+
+// Composant pour la section Dashboard des absences - AMÉLIORÉ
 const AbsencesDashboard: React.FC<{
   absences: Absence[];
 }> = ({ absences }) => {
@@ -165,6 +171,16 @@ const AbsencesDashboard: React.FC<{
     return date.toLocaleDateString('fr-FR', { month: 'long' });
   };
 
+  // Déterminer si un motif est un congé payé
+  const isCongePayé = (motif: string): boolean => {
+    return CONGES_PAYES.some(conge => motif.toLowerCase().includes(conge.toLowerCase()));
+  };
+
+  // Déterminer si un motif est un congé sans solde
+  const isCongeSansSolde = (motif: string): boolean => {
+    return CONGES_SANS_SOLDE.some(conge => motif.toLowerCase().includes(conge.toLowerCase()));
+  };
+
   // Calculer les statistiques des absences
   const calculateAbsenceStats = () => {
     // Initialiser les statistiques
@@ -181,6 +197,9 @@ const AbsencesDashboard: React.FC<{
           jours: number
         }>
       }>,
+      totalCongesPayes: 0,
+      totalCongesSansSolde: 0,
+      totalAutresAbsences: 0
     };
 
     // Initialiser les absences par année pour toutes les années disponibles
@@ -233,6 +252,15 @@ const AbsencesDashboard: React.FC<{
         stats.absencesByMotif[absence.motif] = 0;
       }
       stats.absencesByMotif[absence.motif] += daysCount;
+
+      // Calculer les totaux par type de congé
+      if (isCongePayé(absence.motif)) {
+        stats.totalCongesPayes += daysCount;
+      } else if (isCongeSansSolde(absence.motif)) {
+        stats.totalCongesSansSolde += daysCount;
+      } else {
+        stats.totalAutresAbsences += daysCount;
+      }
     });
 
     return stats;
@@ -244,10 +272,68 @@ const AbsencesDashboard: React.FC<{
   const yearEntries = Object.entries(stats.absencesByYear);
   yearEntries.sort((a, b) => Number(b[0]) - Number(a[0])); // Trier par année décroissante
 
+  // Récupérer les types de motifs uniques pour les utiliser dans le graphique
+  const uniqueMotifs = Object.keys(stats.absencesByMotif);
+
+  // Obtenir les couleurs pour les motifs
+  const getMotifColor = (motif: string, index: number) => {
+    const colors = [
+      { bg: 'bg-blue-100', text: 'text-blue-800', bgDark: 'dark:bg-blue-900', textDark: 'dark:text-blue-200', border: 'border-blue-200', progress: 'bg-blue-500' },
+      { bg: 'bg-green-100', text: 'text-green-800', bgDark: 'dark:bg-green-900', textDark: 'dark:text-green-200', border: 'border-green-200', progress: 'bg-green-500' },
+      { bg: 'bg-purple-100', text: 'text-purple-800', bgDark: 'dark:bg-purple-900', textDark: 'dark:text-purple-200', border: 'border-purple-200', progress: 'bg-purple-500' },
+      { bg: 'bg-yellow-100', text: 'text-yellow-800', bgDark: 'dark:bg-yellow-900', textDark: 'dark:text-yellow-200', border: 'border-yellow-200', progress: 'bg-yellow-500' },
+      { bg: 'bg-red-100', text: 'text-red-800', bgDark: 'dark:bg-red-900', textDark: 'dark:text-red-200', border: 'border-red-200', progress: 'bg-red-500' },
+      { bg: 'bg-indigo-100', text: 'text-indigo-800', bgDark: 'dark:bg-indigo-900', textDark: 'dark:text-indigo-200', border: 'border-indigo-200', progress: 'bg-indigo-500' }
+    ];
+
+    if (isCongePayé(motif)) {
+      return colors[0]; // Bleu pour congés payés
+    } else if (isCongeSansSolde(motif)) {
+      return colors[4]; // Rouge pour congés sans solde
+    } else {
+      return colors[index % colors.length]; // Rotation des autres couleurs
+    }
+  };
+
+  // Calcul du total des jours d'absence
+  const totalDays = Object.values(stats.absencesByMotif).reduce((acc, val) => acc + val, 0);
+
   return (
-    <>
-      {/* Absences par année - format de tableau détaillé */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md mb-6">
+    <div className="space-y-6">
+      {/* Card pour les statistiques générales - AMÉLIORÉ */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Total jours d{"'"}absence</h3>
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            {totalDays} jours
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Congés payés</h3>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            {stats.totalCongesPayes} jours
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Congés sans solde</h3>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+            {stats.totalCongesSansSolde} jours
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Années couvertes</h3>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            {uniqueYears.length} années
+          </p>
+        </div>
+      </div>
+
+
+      {/* Absences par année - format de tableau détaillé - AMÉLIORÉ */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md mb-6 border border-gray-100 dark:border-gray-700">
         <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white flex items-center">
           <Calendar className="h-5 w-5 mr-2 text-blue-500" />
           Absences par année
@@ -257,91 +343,145 @@ const AbsencesDashboard: React.FC<{
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-700">
               <TableRow className="dark:border-gray-600">
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <TableHead className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
                   Année
                 </TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <TableHead className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-64">
                   Période
                 </TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Mois
-                </TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <TableHead className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">
                   Motif
                 </TableHead>
-                <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Jours d{"'"}absence
+                <TableHead className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
+                  Jours
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {yearEntries.length > 0 ? (
-                yearEntries.flatMap(([year, yearData], yearIndex) => (
+                yearEntries.flatMap(([year, yearData]) => (
                   yearData.absences.length > 0 ? (
-                    yearData.absences.map((absence, absenceIndex) => (
-                      <TableRow
-                        key={`${year}-${absenceIndex}`}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors"
-                      >
-                        <TableCell className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                          {absenceIndex === 0 ? (
-                            <>
-                              {year}
-                              {Number(year) === currentYear && (
-                                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                  Année courante
-                                </span>
-                              )}
-                            </>
-                          ) : null}
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                          {absence.dateDebut} - {absence.dateFin}
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                          {absence.mois}
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                            {absence.motif}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                          {absence.jours} jour{absence.jours > 1 ? 's' : ''}
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    yearData.absences.map((absence, absenceIndex) => {
+                      // Déterminer le type de congé pour la coloration
+                      let typeClass = '';
+                      if (isCongePayé(absence.motif)) {
+                        typeClass = 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300';
+                      } else if (isCongeSansSolde(absence.motif)) {
+                        typeClass = 'bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-300';
+                      } else {
+                        typeClass = 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
+                      }
+
+                      return (
+                        <TableRow
+                          key={`${year}-${absenceIndex}`}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors"
+                        >
+                          <TableCell className="px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                            {absenceIndex === 0 ? (
+                              <div className="flex items-center">
+                                <span className="text-lg font-bold">{year}</span>
+                                {Number(year) === currentYear && (
+                                  <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    Actuel
+                                  </span>
+                                )}
+                              </div>
+                            ) : null}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                              <span>{absence.dateDebut} - {absence.dateFin}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-3 py-2 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              isCongePayé(absence.motif)
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                : isCongeSansSolde(absence.motif)
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                            }`}>
+                              {absence.motif}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-3 py-2 whitespace-nowrap text-right">
+                            <span className={`px-2 py-1 rounded-md ${typeClass} font-medium`}>
+                              {absence.jours} jour{absence.jours > 1 ? 's' : ''}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow key={year} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600">
-                      <TableCell className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                        {year}
-                        {Number(year) === currentYear && (
-                          <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            Année courante
-                          </span>
-                        )}
+                      <TableCell className="px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                        <div className="flex items-center">
+                          <span className="text-lg font-bold">{year}</span>
+                          {Number(year) === currentYear && (
+                            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              Actuel
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell colSpan={4} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                        Aucune absence pour cette année
+                      <TableCell colSpan={3} className="px-3 py-2 text-center text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center justify-center">
+                          <AlertCircle className="w-4 h-4 mr-2 text-gray-400" />
+                          Aucune absence pour cette année
+                        </div>
                       </TableCell>
                     </TableRow>
                   )
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                    Aucune donnée disponible
+                  <TableCell colSpan={4} className="px-3 py-4 text-center text-gray-500 dark:text-gray-400">
+                    <div className="flex flex-col items-center justify-center py-6">
+                      <Calendar className="h-12 w-12 mb-3 text-gray-300 dark:text-gray-600" />
+                      <p className="text-lg font-medium">Aucune donnée disponible</p>
+                    </div>
                   </TableCell>
                 </TableRow>
+              )}
+
+              {/* Ajouter un récapitulatif en bas - AMÉLIORÉ */}
+              {yearEntries.length > 0 && (
+                <>
+                  <TableRow className="bg-gray-50 dark:bg-gray-700 font-medium">
+                    <TableCell colSpan={3} className="px-3 py-2 text-right text-gray-900 dark:text-white">
+                      Total congés payés:
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-right text-blue-600 dark:text-blue-400 font-bold">
+                      {stats.totalCongesPayes} jours
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-gray-50 dark:bg-gray-700 font-medium">
+                    <TableCell colSpan={3} className="px-3 py-2 text-right text-gray-900 dark:text-white">
+                      Total congés sans solde:
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-right text-red-600 dark:text-red-400 font-bold">
+                      {stats.totalCongesSansSolde} jours
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-gray-50 dark:bg-gray-700 font-medium">
+                    <TableCell colSpan={3} className="px-3 py-2 text-right text-gray-900 dark:text-white">
+                      Total des jours d{"'"}absence:
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-right text-blue-600 dark:text-blue-400 font-bold">
+                      {totalDays} jours
+                    </TableCell>
+                  </TableRow>
+                </>
               )}
             </TableBody>
           </Table>
         </div>
       </div>
-    </>
+    </div>
   );
 };
-
 export default function CollaborateurDetailPage() {
   const router = useRouter();
   const params = useParams();

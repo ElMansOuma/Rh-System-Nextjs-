@@ -30,7 +30,7 @@ export const NAV_DATA: NavSection[] = [
       {
         title: "Tableau de bord",
         icon: HomeIcon,
-        url: "/test",
+        url: "/protected/dashboard",
         items: [] as NavItem[],
       },
       {
