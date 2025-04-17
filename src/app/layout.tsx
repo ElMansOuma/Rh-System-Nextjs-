@@ -12,11 +12,11 @@ import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | NextAdmin - Next.js Dashboard Kit",
-    default: "NextAdmin - Next.js Dashboard Kit",
+    template: "%s | HR System",
+    default: "HR System",
   },
   description:
-    "Next.js admin dashboard toolkit with 200+ templates, UI components, and integrations for fast dashboard development.",
+    "Human Resources Management System for employee management and HR operations.",
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {

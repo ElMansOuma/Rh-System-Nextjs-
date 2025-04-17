@@ -1,8 +1,7 @@
-import axios from 'axios';
+import apiClient, { API_BASE_URL } from './api';
 import { toast } from "sonner";
 
-const API_BASE_URL = 'http://3.67.202.103:8080';
-const API_URL = `${API_BASE_URL}/api/documents`;
+const API_URL = `/api/documents`;
 
 export interface Document {
   id: number;
@@ -11,6 +10,7 @@ export interface Document {
   date: string;
   size: string;
 }
+
 const documentService = {
   uploadDocument: async (collaborateurId: number, file: File, documentType: string) => {
     try {
@@ -18,7 +18,7 @@ const documentService = {
       formData.append('file', file);
       formData.append('documentType', documentType);
 
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${API_URL}/upload/${collaborateurId}`,
         formData,
         {
@@ -42,7 +42,7 @@ const documentService = {
 
   getDocumentsByCollaborateur: async (collaborateurId: number) => {
     try {
-      const response = await axios.get(`${API_URL}/collaborateur/${collaborateurId}`);
+      const response = await apiClient.get(`${API_URL}/collaborateur/${collaborateurId}`);
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la récupération des documents:', error);
@@ -53,7 +53,7 @@ const documentService = {
 
   getDocument: async (id: number) => {
     try {
-      const response = await axios.get(`${API_URL}/${id}`);
+      const response = await apiClient.get(`${API_URL}/${id}`);
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la récupération du document:', error);
@@ -64,7 +64,7 @@ const documentService = {
 
   downloadDocument: async (id: number) => {
     try {
-      const response = await axios.get(`${API_URL}/${id}/download`, {
+      const response = await apiClient.get(`${API_URL}/${id}/download`, {
         responseType: 'blob'
       });
 
@@ -98,7 +98,7 @@ const documentService = {
     try {
       // Récupérer les métadonnées du document pour déterminer le type
       const docInfo = await documentService.getDocument(id);
-      const response = await axios.get(`${API_URL}/${id}/view`, {
+      const response = await apiClient.get(`${API_URL}/${id}/view`, {
         responseType: 'blob'
       });
 
@@ -133,7 +133,7 @@ const documentService = {
 
   deleteDocument: async (id: number) => {
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await apiClient.delete(`${API_URL}/${id}`);
       // Add success notification
       toast.success('Document supprimé avec succès');
       return true;

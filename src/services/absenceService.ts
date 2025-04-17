@@ -1,7 +1,6 @@
-import axios from 'axios';
+import apiClient, { API_BASE_URL } from './api';
 
-const API_BASE_URL = 'http://3.67.202.103:8080';
-const API_URL = `${API_BASE_URL}/api/absences`;
+const API_URL = `/api/absences`;
 
 // Modifié pour correspondre aux constantes de l'enum Java
 export type MotifAbsence =
@@ -36,12 +35,12 @@ export interface Absence {
 
 const absenceService = {
   getAll: async () => {
-    const response = await axios.get(API_URL);
+    const response = await apiClient.get(API_URL);
     return response.data;
   },
 
   getById: async (id: number) => {
-    const response = await axios.get(`${API_URL}/${id}`);
+    const response = await apiClient.get(`${API_URL}/${id}`);
 
     // Si un justificatif est présent, construire l'URL complète
     if (response.data.justificatifUrl) {
@@ -52,12 +51,12 @@ const absenceService = {
   },
 
   getByCollaborateur: async (collaborateurId: number) => {
-    const response = await axios.get(`${API_URL}/collaborateur/${collaborateurId}`);
+    const response = await apiClient.get(`${API_URL}/collaborateur/${collaborateurId}`);
     return response.data;
   },
 
   getMotifs: async () => {
-    const response = await axios.get(`${API_URL}/motifs`);
+    const response = await apiClient.get(`${API_URL}/motifs`);
     return response.data;
   },
 
@@ -76,20 +75,20 @@ const absenceService = {
       const { justificatif, ...absenceData } = absence;
 
       // Créer l'absence sans le justificatif
-      const response = await axios.post(API_URL, absenceData);
+      const response = await apiClient.post(API_URL, absenceData);
 
       // Si un justificatif est fourni, l'uploader séparément
       if (justificatif && response.data.id && justificatif instanceof File) {
         const formData = new FormData();
         formData.append('justificatif', justificatif);
-        await axios.post(`${API_URL}/${response.data.id}/justificatif`, formData, {
+        await apiClient.post(`${API_URL}/${response.data.id}/justificatif`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
 
         // Récupérer les données mises à jour
-        const updatedResponse = await axios.get(`${API_URL}/${response.data.id}`);
+        const updatedResponse = await apiClient.get(`${API_URL}/${response.data.id}`);
         return updatedResponse.data;
       }
 
@@ -105,19 +104,19 @@ const absenceService = {
       const { justificatif, ...absenceData } = absence;
 
       // Mettre à jour l'absence sans le justificatif
-      const response = await axios.put(`${API_URL}/${id}`, absenceData);
+      const response = await apiClient.put(`${API_URL}/${id}`, absenceData);
 
       // Si un justificatif est fourni et c'est un fichier (pas une URL/string), l'uploader
       if (justificatif && justificatif instanceof File) {
         const formData = new FormData();
         formData.append('justificatif', justificatif);
-        await axios.post(`${API_URL}/${id}/justificatif`, formData, {
+        await apiClient.post(`${API_URL}/${id}/justificatif`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
         // Récupérer les données mises à jour
-        const updatedResponse = await axios.get(`${API_URL}/${id}`);
+        const updatedResponse = await apiClient.get(`${API_URL}/${id}`);
         return updatedResponse.data;
       }
 
@@ -129,17 +128,17 @@ const absenceService = {
   },
 
   delete: async (id: number) => {
-    return axios.delete(`${API_URL}/${id}`);
+    return apiClient.delete(`${API_URL}/${id}`);
   },
 
   updateObservations: async (id: number, observations: string) => {
-    return axios.patch(`${API_URL}/${id}/observations`, observations);
+    return apiClient.patch(`${API_URL}/${id}/observations`, observations);
   },
 
   // Méthode pour télécharger un justificatif
   downloadJustificatif: async (absenceId: number) => {
     try {
-      const response = await axios.get(`${API_URL}/${absenceId}/justificatif`, {
+      const response = await apiClient.get(`${API_URL}/${absenceId}/justificatif`, {
         responseType: 'blob'
       });
       return response.data;

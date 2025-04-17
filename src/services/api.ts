@@ -1,15 +1,13 @@
 // services/api.ts
 import axios from 'axios';
 
-// Utilisez la bonne URL avec le préfixe correcte
-const API_BASE_URL = 'http://3.67.202.103:8080';
-// Ne pas utiliser /api comme base, mais le compléter dans chaque appel
-const API_URL = API_BASE_URL;
+// Utiliser la variable d'environnement
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
-console.log("API URL:", API_URL); // Pour déboguer
+console.log("API URL:", API_BASE_URL, "Environnement:", process.env.NODE_ENV); // Pour déboguer
 
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -50,3 +48,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+export { API_BASE_URL };

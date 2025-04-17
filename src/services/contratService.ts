@@ -1,21 +1,22 @@
-import axios from 'axios';
+import apiClient, { API_BASE_URL } from './api';
 import { Contrat } from '../types/Contrat';
+import axios from "axios";
 
-const API_BASE_URL = 'http://3.67.202.103:8080';
-const API_URL = `${API_BASE_URL}/api/contrats`;
+const API_URL = `/api/contrats`;
+
 const contratService = {
   getAll: async () => {
-    const response = await axios.get(API_URL);
+    const response = await apiClient.get(API_URL);
     return response.data;
   },
 
   getById: async (id: number) => {
-    const response = await axios.get(`${API_URL}/${id}`);
+    const response = await apiClient.get(`${API_URL}/${id}`);
     return response.data;
   },
 
   getByCollaborateurId: async (collaborateurId: number) => {
-    const response = await axios.get(`${API_URL}/collaborateur/${collaborateurId}`);
+    const response = await apiClient.get(`${API_URL}/collaborateur/${collaborateurId}`);
     return response.data;
   },
 
@@ -42,7 +43,7 @@ const contratService = {
         retraite: contrat.retraite !== undefined ? Number(contrat.retraite) : undefined,
       };
 
-      const response = await axios.post(API_URL, sanitizedData);
+      const response = await apiClient.post(API_URL, sanitizedData);
       return response.data;
     } catch (error) {
       console.error('Error creating contrat:', error);
@@ -78,7 +79,7 @@ const contratService = {
         retraite: contrat.retraite !== undefined ? Number(contrat.retraite) : undefined,
       };
 
-      const response = await axios.put(`${API_URL}/${id}`, sanitizedData);
+      const response = await apiClient.put(`${API_URL}/${id}`, sanitizedData);
       return response.data;
     } catch (error) {
       console.error('Error updating contrat:', error);
@@ -87,7 +88,7 @@ const contratService = {
   },
 
   delete: async (id: number) => {
-    return axios.delete(`${API_URL}/${id}`);
+    return apiClient.delete(`${API_URL}/${id}`);
   },
 
   uploadDocument: async (id: number, file: File) => {
@@ -95,7 +96,7 @@ const contratService = {
       const formData = new FormData();
       formData.append('document', file);
 
-      const response = await axios.post(`${API_URL}/${id}/document`, formData, {
+      const response = await apiClient.post(`${API_URL}/${id}/document`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -110,7 +111,7 @@ const contratService = {
 
   downloadDocument: async (id: number) => {
     try {
-      const response = await axios.get(`${API_URL}/${id}/document`, {
+      const response = await apiClient.get(`${API_URL}/${id}/document`, {
         responseType: 'blob'
       });
 
