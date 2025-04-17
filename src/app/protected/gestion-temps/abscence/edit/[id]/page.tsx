@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
-import absenceService, { Absence, MotifAbsence } from '@/services/absenceService';
+import absenceService, { Absence, MotifAbsence, motifLibelles } from '@/services/absenceService';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 import { toast } from "sonner";
 import { ArrowLeft, FileText, Download } from "lucide-react";
@@ -45,13 +45,13 @@ export default function EditAbsencePage() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedCollaborateur, setSelectedCollaborateur] = useState<Collaborateur | null>(null);
-  const [motifs, setMotifs] = useState<MotifAbsence[]>([]);
+  const [motifs, setMotifs] = useState<{value: MotifAbsence | "", label: string}[]>([]);
 
   const [formData, setFormData] = useState<Absence>({
     collaborateurId: 0,
     dateDebut: '',
     dateFin: '',
-    motif: '' as MotifAbsence,
+    motif: '' as unknown as MotifAbsence,
     observations: '',
   });
 
@@ -114,15 +114,18 @@ export default function EditAbsencePage() {
         setCollaborateurs(activeCollaborateurs);
         setFilteredCollaborateurs(activeCollaborateurs);
 
-        // Chargement des motifs d'absence
+        // Chargement des motifs d'absence avec leurs libellés
         try {
-          const motifsResponse = await absenceService.getMotifs();
-          if (Array.isArray(motifsResponse)) {
-            setMotifs(motifsResponse);
-          }
+          const motifOptions = await absenceService.getMotifOptions();
+          setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...motifOptions]);
         } catch (e) {
           console.error('Erreur lors du chargement des motifs:', e);
-          // Fallback aux motifs hardcodés si nécessaire
+          // Fallback aux motifs hardcodés
+          const fallbackMotifs = Object.entries(motifLibelles).map(([value, label]) => ({
+            value: value as MotifAbsence,
+            label
+          }));
+          setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...fallbackMotifs]);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des collaborateurs:', error);
@@ -178,7 +181,15 @@ export default function EditAbsencePage() {
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
 
-    if (type === 'number') {
+    if (name === 'motif') {
+      // Vérifier si la valeur est une valeur d'enum valide
+      if (value === "" || Object.keys(motifLibelles).includes(value)) {
+        setFormData({
+          ...formData,
+          [name]: value as unknown as MotifAbsence
+        });
+      }
+    } else if (type === 'number') {
       setFormData({
         ...formData,
         [name]: value ? parseFloat(value) : undefined
@@ -258,8 +269,8 @@ export default function EditAbsencePage() {
       return false;
     }
 
-    // Vérifier que le motif est renseigné
-    if (!formData.motif) {
+    // Vérifier que le motif est renseigné et est une valeur d'enum valide
+    if (!formData.motif || formData.motif === "" as unknown as MotifAbsence) {
       setErrorMessage('Veuillez saisir un motif d\'absence.');
       return false;
     }
@@ -278,6 +289,11 @@ export default function EditAbsencePage() {
     setErrorMessage(null);
 
     try {
+      // S'assurer que le motif est une valeur d'enum valide
+      if (formData.motif === "" as unknown as MotifAbsence) {
+        throw new Error("Motif d'absence invalide");
+      }
+
       // Préparer les données à envoyer
       const absenceData: Absence = {
         ...formData,
@@ -301,19 +317,6 @@ export default function EditAbsencePage() {
       setIsSubmitting(false);
     }
   };
-
-  // Utiliser les motifs du service ou tomber sur la liste par défaut
-  const motifOptions = motifs.length > 0
-    ? [{ value: "", label: "Sélectionnez un motif" }, ...motifs.map(motif => ({ value: motif, label: motif }))]
-    : [
-      { value: "", label: "Sélectionnez un motif" },
-      { value: "Maladie", label: "Maladie" },
-      { value: "Événement familial", label: "Événement familial" },
-      { value: "Congé payé", label: "Congé payé" },
-      { value: "Congé sans solde", label: "Congé sans solde" },
-      { value: "Formation", label: "Formation" },
-      { value: "Autre", label: "Autre" }
-    ];
 
   if (isLoading) {
     return (
@@ -479,8 +482,8 @@ export default function EditAbsencePage() {
               <Select
                 label="Motif d'absence*"
                 name="motif"
-                items={motifOptions}
-                value={formData.motif}
+                items={motifs}
+                value={formData.motif as string}
                 onChange={handleInputChange}
                 className="dark:bg-gray-700 dark:text-white"
               />

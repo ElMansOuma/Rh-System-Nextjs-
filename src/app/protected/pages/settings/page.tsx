@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
     try {
       // Appel API pour mettre à jour le profil
-      const response = await apiClient.put(`/admins/${adminData?.id}`, {
+      const response = await apiClient.put(`/api/admins/${adminData?.id}`, {
         fullName,
         email
       });
@@ -135,7 +135,7 @@ export default function SettingsPage() {
 
     try {
       // Appel API pour mettre à jour le mot de passe
-      await apiClient.put(`/admins/${adminData?.id}/password`, {
+      await apiClient.put(`/api/admins/${adminData?.id}/password`, {
         currentPassword,
         newPassword
       });
