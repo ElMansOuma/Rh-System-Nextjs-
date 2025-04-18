@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { Edit, Trash2, Search, Filter, ChevronLeft, ChevronRight, Download, Calendar, X } from "lucide-react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from "sonner";
-import absenceService, { Absence, MotifAbsence, motifLibelles } from "@/services/absenceService";
+import absenceService, { Absence, MotifAbsence } from "@/services/absenceService";
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 
 // Fonction utilitaire pour calculer les jours ouvrés
@@ -42,14 +42,15 @@ export default function AbsencesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Mise à jour de l'interface Absence pour inclure les champs supplémentaires
   const [absences, setAbsences] = useState<(Absence & { collaborateur?: Collaborateur, joursOuvres?: number })[]>([]);
-  const [motifs, setMotifs] = useState<string[]>([]);
+  const [motifs, setMotifs] = useState<MotifAbsence[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [motifFilter, setMotifFilter] = useState<string>('Tous');
+  const [motifFilter, setMotifFilter] = useState<number | 'Tous'>('Tous');
   const [yearFilter, setYearFilter] = useState<string>('Tous');
   const [showFilters, setShowFilters] = useState<boolean>(false);
 
@@ -59,7 +60,7 @@ export default function AbsencesPage() {
 
   // Years for filter dropdown
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
 
   // Fetch absences and motifs
   useEffect(() => {
@@ -68,8 +69,8 @@ export default function AbsencesPage() {
         setLoading(true);
 
         // Récupérer la liste des motifs
-        const motifsList = await absenceService.getMotifs();
-        setMotifs(['Tous', ...motifsList]);
+        const motifsList = await absenceService.getAllMotifs();
+        setMotifs(motifsList);
 
         // Récupérer les absences
         const data = await absenceService.getAll();
@@ -115,10 +116,10 @@ export default function AbsencesPage() {
       const matchesSearch =
         searchTerm === '' ||
         collaborateurName.includes(searchTerm.toLowerCase()) ||
-        absence.motif.toLowerCase().includes(searchTerm.toLowerCase());
+        absence.motif.libelle.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Filtre par motif
-      const matchesMotif = motifFilter === 'Tous' || absence.motif === motifFilter;
+      const matchesMotif = motifFilter === 'Tous' || absence.motif.id === motifFilter;
 
       // Filtre par année
       const absenceYear = new Date(absence.dateDebut).getFullYear().toString();
@@ -231,7 +232,8 @@ export default function AbsencesPage() {
       )}
 
       {/* Search and Filter Bar */}
-      <div className="flex space-x-4 mb-6">
+      <div className="flex flex-wrap gap-4 mb-6">
+        {/* Search Input */}
         <div className="relative flex-grow">
           <Input
             type="text"
@@ -243,20 +245,51 @@ export default function AbsencesPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
         </div>
 
+        {/* Motif Filter */}
         <div className="w-48">
           <div className="relative">
             <select
-              value={motifFilter}
-              onChange={(e) => setMotifFilter(e.target.value)}
+              value={typeof motifFilter === 'number' ? motifFilter : 'Tous'}
+              onChange={(e) => setMotifFilter(e.target.value === 'Tous' ? 'Tous' : Number(e.target.value))}
               className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-700"
             >
-              {motifs.map((motif, index) => (
-                <option key={index} value={motif}>{motif === 'Tous' ? 'Tous les motifs' : motif}</option>
+              <option value="Tous">Tous les motifs</option>
+              {motifs.map((motif) => (
+                <option key={motif.id} value={motif.id}>{motif.libelle}</option>
               ))}
             </select>
             <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
           </div>
         </div>
+
+        {/* Year Filter */}
+        <div className="w-48">
+          <div className="relative">
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-700"
+            >
+              <option value="Tous">Toutes les années</option>
+              {years.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+          </div>
+        </div>
+
+        {/* Reset Filters Button - shown only when filters are active */}
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            onClick={resetFilters}
+            className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+          >
+            <X size={16} />
+            <span>Réinitialiser les filtres</span>
+          </Button>
+        )}
       </div>
 
       {/* Results Summary */}
@@ -325,8 +358,11 @@ export default function AbsencesPage() {
                   <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
                     {absence.joursOuvres} jours
                   </TableCell>
-                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                    {motifLibelles[absence.motif as MotifAbsence] || absence.motif}
+                  <TableCell
+                    className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300"
+                    style={{ color: absence.motif.couleur }}
+                  >
+                    {absence.motif.libelle}
                   </TableCell>
                   <TableCell className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex justify-end space-x-2">
@@ -366,7 +402,7 @@ export default function AbsencesPage() {
 
       {/* Pagination Controls */}
       {!loading && totalPages > 0 && (
-        <div className="bg-gray-50 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-center items-center">
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 border-t border-gray-200 dark:border-gray-600 flex justify-center items-center rounded-b-lg mt-0">
           <div className="flex items-center space-x-2">
             <Button
               variant="subtle"

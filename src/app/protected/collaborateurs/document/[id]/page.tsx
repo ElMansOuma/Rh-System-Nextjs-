@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import collaborateurService from '@/services/collaborateurService';
-import absenceService, { Absence, MotifAbsence, motifLibelles } from '@/services/absenceService';
+import absenceService, { Absence, MotifAbsence } from '@/services/absenceService';
 import contratService from '@/services/contratService';
 import { Contrat } from '@/types/Contrat';
 import documentService, { Document } from '@/services/documentService';
@@ -140,11 +140,34 @@ const calculateDaysBetween = (startDate: string, endDate: string): number => {
   return count;
 };
 
+// Définition des libellés de motifs d'absence
+const motifLibelles: Record<string, string> = {
+  'CONGE_PAYE': 'Congés payés',
+  'CONGE_SANS_SOLDE': 'Congés sans solde',
+  'MALADIE': 'Maladie',
+  'FORMATION': 'Formation',
+  'EVENEMENT_FAMILIAL': 'Événement familial',
+  'AUTRE': 'Autre'
+};
+
 // Liste des motifs classifiés comme congés payés
 const CONGES_PAYES = ['CONGE_PAYE'];
 
 // Liste des motifs classifiés comme congés sans solde
 const CONGES_SANS_SOLDE = ['CONGE_SANS_SOLDE'];
+
+// Fonction pour convertir une couleur HEX en RGB
+const hexToRgb = (hex: string) => {
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+};
 
 // Composant pour la section Dashboard des absences - Optimisé pour minimiser l'espace
 const AbsencesDashboard: React.FC<{
@@ -170,10 +193,10 @@ const AbsencesDashboard: React.FC<{
   const calculateAbsenceStats = () => {
     // Initialiser les statistiques
     const stats = {
-      absencesByMotif: {} as Record<MotifAbsence, number>,
+      absencesByMotif: {} as Record<string, number>,
       absencesByYear: {} as Record<number, {
         days: number,
-        motifs: Record<MotifAbsence, number>
+        motifs: Record<string, number>
       }>,
       totalCongesPayes: 0,
       totalCongesSansSolde: 0,
@@ -188,18 +211,18 @@ const AbsencesDashboard: React.FC<{
     uniqueYears.forEach(year => {
       stats.absencesByYear[year] = {
         days: 0,
-        motifs: {} as Record<MotifAbsence, number>
+        motifs: {} as Record<string, number>
       };
 
       // Initialiser tous les types de motifs pour cette année
       Object.keys(motifLibelles).forEach(motif => {
-        stats.absencesByYear[year].motifs[motif as MotifAbsence] = 0;
+        stats.absencesByYear[year].motifs[motif] = 0;
       });
     });
 
     // Initialiser tous les types de motifs au niveau global
     Object.keys(motifLibelles).forEach(motif => {
-      stats.absencesByMotif[motif as MotifAbsence] = 0;
+      stats.absencesByMotif[motif] = 0;
     });
 
     // Analyser chaque absence
@@ -207,7 +230,7 @@ const AbsencesDashboard: React.FC<{
       const startDate = new Date(absence.dateDebut);
       const endDate = new Date(absence.dateFin);
       const year = startDate.getFullYear();
-      const motif = absence.motif;
+      const motifCode = absence.motif.code; // Utiliser le code du motif depuis l'objet
 
       // Calculer la durée de l'absence en jours ouvrables uniquement
       const daysCount = calculateDaysBetween(absence.dateDebut, absence.dateFin);
@@ -216,23 +239,29 @@ const AbsencesDashboard: React.FC<{
       if (!stats.absencesByYear[year]) {
         stats.absencesByYear[year] = {
           days: 0,
-          motifs: {} as Record<MotifAbsence, number>
+          motifs: {} as Record<string, number>
         };
 
         // Initialiser tous les types de motifs pour cette année
         Object.keys(motifLibelles).forEach(m => {
-          stats.absencesByYear[year].motifs[m as MotifAbsence] = 0;
+          stats.absencesByYear[year].motifs[m] = 0;
         });
       }
 
       stats.absencesByYear[year].days += daysCount;
-      stats.absencesByYear[year].motifs[motif] += daysCount;
+
+      // S'assurer que le motif existe avant d'incrémenter
+      if (stats.absencesByYear[year].motifs.hasOwnProperty(motifCode)) {
+        stats.absencesByYear[year].motifs[motifCode] += daysCount;
+      }
 
       // Compter tous les motifs
-      stats.absencesByMotif[motif] += daysCount;
+      if (stats.absencesByMotif.hasOwnProperty(motifCode)) {
+        stats.absencesByMotif[motifCode] += daysCount;
+      }
 
       // Calculer les totaux par type de motif
-      switch (motif) {
+      switch (motifCode) {
         case 'CONGE_PAYE':
           stats.totalCongesPayes += daysCount;
           break;
@@ -266,9 +295,9 @@ const AbsencesDashboard: React.FC<{
   const selectedYearData = stats.absencesByYear[selectedYear] || {
     days: 0,
     motifs: Object.keys(motifLibelles).reduce((acc, motif) => {
-      acc[motif as MotifAbsence] = 0;
+      acc[motif] = 0;
       return acc;
-    }, {} as Record<MotifAbsence, number>)
+    }, {} as Record<string, number>)
   };
 
   // Récupérer les motifs pour l'année sélectionnée avec des jours > 0
@@ -286,43 +315,48 @@ const AbsencesDashboard: React.FC<{
     AUTRE: stats.totalAutres > 0
   };
 
-  // Obtenir les couleurs pour les motifs
-  const getMotifColor = (motif: string) => {
-    switch (motif) {
-      case 'CONGE_PAYE':
-        return { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' };
-      case 'CONGE_SANS_SOLDE':
-        return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
-      case 'MALADIE':
-        return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' };
-      case 'FORMATION':
-        return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' };
-      case 'EVENEMENT_FAMILIAL':
-        return { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' };
-      case 'AUTRE':
-        return { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
-      default:
-        return { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
+  // Fonction pour obtenir le style de couleur d'un motif, en utilisant la couleur de la BD
+  const getMotifColor = (motifCode: string) => {
+    // Trouver l'absence avec ce motif pour récupérer la couleur
+    const absence = absences.find(abs => abs.motif.code === motifCode);
+    const couleur = absence?.motif.couleur || '#CCCCCC';
+
+    const rgb = hexToRgb(couleur);
+    if (rgb) {
+      return {
+        bg: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`,
+        text: 'text-gray-800 dark:text-gray-200',
+        border: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`,
+        color: couleur
+      };
     }
+
+    // Fallback par défaut
+    return {
+      bg: 'rgba(204, 204, 204, 0.15)',
+      text: 'text-gray-800 dark:text-gray-200',
+      border: 'rgba(204, 204, 204, 0.3)',
+      color: '#CCCCCC'
+    };
   };
 
   // Fonction pour obtenir l'icône correspondant au motif
   const getMotifIcon = (motif: string) => {
     switch (motif) {
       case 'CONGE_PAYE':
-        return <Calendar className="h-5 w-5 text-blue-500" />;
+        return <Calendar className="h-5 w-5" />;
       case 'CONGE_SANS_SOLDE':
-        return <CreditCard className="h-5 w-5 text-red-500" />;
+        return <CreditCard className="h-5 w-5" />;
       case 'MALADIE':
-        return <AlertCircle className="h-5 w-5 text-amber-500" />;
+        return <AlertCircle className="h-5 w-5" />;
       case 'FORMATION':
-        return <Briefcase className="h-5 w-5 text-green-500" />;
+        return <Briefcase className="h-5 w-5" />;
       case 'EVENEMENT_FAMILIAL':
-        return <User className="h-5 w-5 text-purple-500" />;
+        return <User className="h-5 w-5" />;
       case 'AUTRE':
-        return <Hash className="h-5 w-5 text-gray-500" />;
+        return <Hash className="h-5 w-5" />;
       default:
-        return <Hash className="h-5 w-5 text-gray-500" />;
+        return <Hash className="h-5 w-5" />;
     }
   };
 
@@ -372,14 +406,18 @@ const AbsencesDashboard: React.FC<{
                   return (
                     <div
                       key={motif}
-                      className={`${colorScheme.bg} dark:bg-gray-700 p-3 rounded-lg ${colorScheme.border} dark:border-gray-600 border flex justify-between items-center`}
+                      className="p-3 rounded-lg border flex justify-between items-center"
+                      style={{
+                        backgroundColor: colorScheme.bg,
+                        borderColor: colorScheme.border
+                      }}
                     >
                       <div className="flex items-center">
-                        <div className="mr-2">
+                        <div className="mr-2" style={{ color: colorScheme.color }}>
                           {motifIcon}
                         </div>
-                        <span className={`font-medium ${colorScheme.text} dark:text-gray-200`}>
-                          {motifLibelles[motif as MotifAbsence]}
+                        <span className={`font-medium ${colorScheme.text}`}>
+                          {motifLibelles[motif] || motif}
                         </span>
                       </div>
                       <span className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
@@ -427,83 +465,46 @@ const AbsencesDashboard: React.FC<{
             </h4>
 
             <div className="space-y-2">
-              {/* Congés payés */}
-              {existingMotifs.CONGE_PAYE && (
-                <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg border border-blue-100 dark:border-blue-800 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Calendar className="h-5 w-5 text-blue-500 mr-2" />
-                    <span className="font-medium text-blue-800 dark:text-blue-200">Congés payés</span>
-                  </div>
-                  <span className="bg-white dark:bg-gray-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
-                    {stats.totalCongesPayes} jours
-                  </span>
-                </div>
-              )}
+              {/* Affichage dynamique des motifs avec leurs couleurs de la BD */}
+              {Object.entries(existingMotifs)
+                .filter(([_, exists]) => exists)
+                .map(([motifCode, _]) => {
+                  const colorScheme = getMotifColor(motifCode);
+                  const motifIcon = getMotifIcon(motifCode);
+                  let totalJours = 0;
 
-              {/* Congés sans solde */}
-              {existingMotifs.CONGE_SANS_SOLDE && (
-                <div className="bg-red-50 dark:bg-red-900/30 p-2 rounded-lg border border-red-100 dark:border-red-800 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <CreditCard className="h-5 w-5 text-red-500 mr-2" />
-                    <span className="font-medium text-red-800 dark:text-red-200">Congés sans solde</span>
-                  </div>
-                  <span className="bg-white dark:bg-gray-800 text-red-800 dark:text-red-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
-                    {stats.totalCongesSansSolde} jours
-                  </span>
-                </div>
-              )}
+                  switch (motifCode) {
+                    case 'CONGE_PAYE': totalJours = stats.totalCongesPayes; break;
+                    case 'CONGE_SANS_SOLDE': totalJours = stats.totalCongesSansSolde; break;
+                    case 'MALADIE': totalJours = stats.totalMaladies; break;
+                    case 'FORMATION': totalJours = stats.totalFormations; break;
+                    case 'EVENEMENT_FAMILIAL': totalJours = stats.totalEvenementsFamiliaux; break;
+                    case 'AUTRE': totalJours = stats.totalAutres; break;
+                  }
 
-              {/* Maladie */}
-              {existingMotifs.MALADIE && (
-                <div className="bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-100 dark:border-amber-800 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <AlertCircle className="h-5 w-5 text-amber-500 mr-2" />
-                    <span className="font-medium text-amber-800 dark:text-amber-200">Maladie</span>
-                  </div>
-                  <span className="bg-white dark:bg-gray-800 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
-                    {stats.totalMaladies} jours
-                  </span>
-                </div>
-              )}
-
-              {/* Formation */}
-              {existingMotifs.FORMATION && (
-                <div className="bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-100 dark:border-green-800 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Briefcase className="h-5 w-5 text-green-500 mr-2" />
-                    <span className="font-medium text-green-800 dark:text-green-200">Formation</span>
-                  </div>
-                  <span className="bg-white dark:bg-gray-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
-                    {stats.totalFormations} jours
-                  </span>
-                </div>
-              )}
-
-              {/* Événement familial */}
-              {existingMotifs.EVENEMENT_FAMILIAL && (
-                <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg border border-purple-100 dark:border-purple-800 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <User className="h-5 w-5 text-purple-500 mr-2" />
-                    <span className="font-medium text-purple-800 dark:text-purple-200">Événement familial</span>
-                  </div>
-                  <span className="bg-white dark:bg-gray-800 text-purple-800 dark:text-purple-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
-                    {stats.totalEvenementsFamiliaux} jours
-                  </span>
-                </div>
-              )}
-
-              {/* Autre */}
-              {existingMotifs.AUTRE && (
-                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-100 dark:border-gray-600 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Hash className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="font-medium text-gray-800 dark:text-gray-200">Autre</span>
-                  </div>
-                  <span className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
-                    {stats.totalAutres} jours
-                  </span>
-                </div>
-              )}
+                  return (
+                    <div
+                      key={motifCode}
+                      className="p-2 rounded-lg border flex justify-between items-center"
+                      style={{
+                        backgroundColor: colorScheme.bg,
+                        borderColor: colorScheme.border
+                      }}
+                    >
+                      <div className="flex items-center">
+                        <div className="mr-2" style={{ color: colorScheme.color }}>
+                          {motifIcon}
+                        </div>
+                        <span className={`font-medium ${colorScheme.text}`}>
+                          {motifLibelles[motifCode] || motifCode}
+                        </span>
+                      </div>
+                      <span className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full text-sm font-bold shadow-sm">
+                        {totalJours} jours
+                      </span>
+                    </div>
+                  );
+                })}
 
               {/* Si aucun motif n'existe */}
               {Object.values(existingMotifs).every(v => !v) && (
@@ -514,8 +515,6 @@ const AbsencesDashboard: React.FC<{
                 </div>
               )}
             </div>
-
-
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import absenceService, { Absence, MotifAbsence, motifLibelles } from '@/services/absenceService';
+import absenceService, { Absence, MotifAbsence } from '@/services/absenceService';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
@@ -40,17 +40,25 @@ export default function AddAbsencePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [motifs, setMotifs] = useState<{value: MotifAbsence | "", label: string}[]>([]);
+  const [motifs, setMotifs] = useState<{value: string; label: string; couleur?: string}[]>([]);
 
-  const [formData, setFormData] = useState<Absence>({
+  // Modification ici : on stock l'ID du motif
+  const [formData, setFormData] = useState<{
+    collaborateurId: number;
+    dateDebut: string;
+    dateFin: string;
+    motifId: number | null;
+    observations: string;
+  }>({
     collaborateurId: 0,
     dateDebut: '',
     dateFin: '',
-    motif: '' as unknown as MotifAbsence, // Ça sera remplacé avant soumission
+    motifId: null,
     observations: '',
   });
 
   const [justificatif, setJustificatif] = useState<File | null>(null);
+  const [motifsData, setMotifsData] = useState<MotifAbsence[]>([]);
 
   // Charger les collaborateurs actifs et les motifs d'absence
   useEffect(() => {
@@ -67,16 +75,19 @@ export default function AddAbsencePage() {
 
         // Chargement des motifs d'absence avec leurs libellés
         try {
-          const motifOptions = await absenceService.getMotifOptions();
+          const motifsFromApi = await absenceService.getAllMotifs();
+          setMotifsData(motifsFromApi);
+
+          const motifOptions = motifsFromApi.map(motif => ({
+            value: motif.id.toString(),  // Convert id to string
+            label: motif.libelle,
+            couleur: motif.couleur
+          }));
+
           setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...motifOptions]);
         } catch (e) {
           console.error('Erreur lors du chargement des motifs:', e);
-          // Fallback aux motifs hardcodés
-          const fallbackMotifs = Object.entries(motifLibelles).map(([value, label]) => ({
-            value: value as MotifAbsence,
-            label
-          }));
-          setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...fallbackMotifs]);
+          toast.error('Impossible de charger les motifs d\'absence.');
         }
       } catch (error) {
         console.error('Erreur lors du chargement des collaborateurs:', error);
@@ -132,14 +143,12 @@ export default function AddAbsencePage() {
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
 
+    // Modification pour stocker l'ID du motif
     if (name === 'motif') {
-      // Vérifier si la valeur est une valeur d'enum valide
-      if (value === "" || Object.keys(motifLibelles).includes(value)) {
-        setFormData({
-          ...formData,
-          [name]: value as unknown as MotifAbsence
-        });
-      }
+      setFormData({
+        ...formData,
+        motifId: value === "" ? null : parseInt(value, 10)
+      });
     } else if (type === 'number') {
       setFormData({
         ...formData,
@@ -191,8 +200,8 @@ export default function AddAbsencePage() {
       return false;
     }
 
-    // Vérifier que le motif est renseigné et est une valeur d'enum valide
-    if (!formData.motif || formData.motif === "" as unknown as MotifAbsence) {
+    // Vérifier que le motif est renseigné
+    if (!formData.motifId) {
       setErrorMessage('Veuillez saisir un motif d\'absence.');
       return false;
     }
@@ -200,6 +209,7 @@ export default function AddAbsencePage() {
     return true;
   };
 
+  // Modifier la section handleSubmit de votre composant AddAbsencePage
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -211,15 +221,20 @@ export default function AddAbsencePage() {
     setErrorMessage(null);
 
     try {
-      // S'assurer que le motif est une valeur d'enum valide
-      if (formData.motif === "" as unknown as MotifAbsence) {
+      // Trouver l'objet motif complet à partir de l'ID
+      const selectedMotif = motifsData.find(m => m.id === formData.motifId);
+
+      if (!selectedMotif) {
         throw new Error("Motif d'absence invalide");
       }
 
       // Préparer les données à envoyer
       const absenceData: Absence = {
-        ...formData,
-        motif: formData.motif as MotifAbsence, // Ici on est sûr que c'est une valeur valide
+        collaborateurId: formData.collaborateurId,
+        dateDebut: formData.dateDebut,
+        dateFin: formData.dateFin,
+        motif: selectedMotif, // Envoyer l'objet motif complet
+        observations: formData.observations,
         justificatif: justificatif
       };
 
@@ -382,10 +397,22 @@ export default function AddAbsencePage() {
                 label="Motif d'absence*"
                 name="motif"
                 items={motifs}
-                value={formData.motif as string}
+                value={formData.motifId ? formData.motifId.toString() : ""}
                 onChange={handleInputChange}
                 className="dark:bg-gray-700 dark:text-white"
               />
+              {/* Indicateur visuel de couleur du motif */}
+              {formData.motifId && (
+                <div className="mt-2 flex items-center">
+                  <div
+                    className="w-4 h-4 rounded-full mr-2"
+                    style={{ backgroundColor: motifsData.find(m => m.id === formData.motifId)?.couleur || '#CCCCCC' }}
+                  ></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {motifsData.find(m => m.id === formData.motifId)?.libelle}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">

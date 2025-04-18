@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
-import absenceService, { Absence, MotifAbsence, motifLibelles } from '@/services/absenceService';
+import absenceService, { Absence, MotifAbsence } from '@/services/absenceService';
 import collaborateurService, { Collaborateur } from '@/services/collaborateurService';
 import { toast } from "sonner";
 import { ArrowLeft, FileText, Download } from "lucide-react";
@@ -45,13 +45,14 @@ export default function EditAbsencePage() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedCollaborateur, setSelectedCollaborateur] = useState<Collaborateur | null>(null);
-  const [motifs, setMotifs] = useState<{value: MotifAbsence | "", label: string}[]>([]);
+  const [motifs, setMotifs] = useState<{value: string; label: string; couleur?: string}[]>([]);
+  const [motifsData, setMotifsData] = useState<MotifAbsence[]>([]);
 
-  const [formData, setFormData] = useState<Absence>({
+  const [formData, setFormData] = useState<Omit<Absence, 'motif'> & { motif: string | null }>({
     collaborateurId: 0,
     dateDebut: '',
     dateFin: '',
-    motif: '' as unknown as MotifAbsence,
+    motif: null,
     observations: '',
   });
 
@@ -73,7 +74,7 @@ export default function EditAbsencePage() {
           collaborateurId: absenceData.collaborateurId,
           dateDebut: absenceData.dateDebut,
           dateFin: absenceData.dateFin,
-          motif: absenceData.motif,
+          motif: absenceData.motif?.id?.toString() || null,
           observations: absenceData.observations || '',
         });
 
@@ -116,16 +117,19 @@ export default function EditAbsencePage() {
 
         // Chargement des motifs d'absence avec leurs libellés
         try {
-          const motifOptions = await absenceService.getMotifOptions();
+          const motifsFromApi = await absenceService.getAllMotifs();
+          setMotifsData(motifsFromApi);
+
+          const motifOptions = motifsFromApi.map(motif => ({
+            value: motif.id.toString(),
+            label: motif.libelle,
+            couleur: motif.couleur
+          }));
+
           setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...motifOptions]);
         } catch (e) {
           console.error('Erreur lors du chargement des motifs:', e);
-          // Fallback aux motifs hardcodés
-          const fallbackMotifs = Object.entries(motifLibelles).map(([value, label]) => ({
-            value: value as MotifAbsence,
-            label
-          }));
-          setMotifs([{ value: "", label: "Sélectionnez un motif" }, ...fallbackMotifs]);
+          toast.error('Impossible de charger les motifs d\'absence.');
         }
       } catch (error) {
         console.error('Erreur lors du chargement des collaborateurs:', error);
@@ -182,13 +186,10 @@ export default function EditAbsencePage() {
     const { name, value, type } = e.target;
 
     if (name === 'motif') {
-      // Vérifier si la valeur est une valeur d'enum valide
-      if (value === "" || Object.keys(motifLibelles).includes(value)) {
-        setFormData({
-          ...formData,
-          [name]: value as unknown as MotifAbsence
-        });
-      }
+      setFormData({
+        ...formData,
+        [name]: value === "" ? null : value
+      });
     } else if (type === 'number') {
       setFormData({
         ...formData,
@@ -269,8 +270,8 @@ export default function EditAbsencePage() {
       return false;
     }
 
-    // Vérifier que le motif est renseigné et est une valeur d'enum valide
-    if (!formData.motif || formData.motif === "" as unknown as MotifAbsence) {
+    // Vérifier que le motif est renseigné
+    if (!formData.motif) {
       setErrorMessage('Veuillez saisir un motif d\'absence.');
       return false;
     }
@@ -289,15 +290,18 @@ export default function EditAbsencePage() {
     setErrorMessage(null);
 
     try {
-      // S'assurer que le motif est une valeur d'enum valide
-      if (formData.motif === "" as unknown as MotifAbsence) {
+      // Trouver l'objet motif complet à partir de l'ID
+      const motifId = formData.motif ? parseInt(formData.motif, 10) : null;
+      const selectedMotif = motifsData.find(m => m.id === motifId);
+
+      if (!selectedMotif) {
         throw new Error("Motif d'absence invalide");
       }
 
       // Préparer les données à envoyer
       const absenceData: Absence = {
-        ...formData,
-        motif: formData.motif as MotifAbsence,
+        ...formData as any,
+        motif: selectedMotif,
         justificatif: justificatif
       };
 
@@ -483,10 +487,22 @@ export default function EditAbsencePage() {
                 label="Motif d'absence*"
                 name="motif"
                 items={motifs}
-                value={formData.motif as string}
+                value={formData.motif || ""}
                 onChange={handleInputChange}
                 className="dark:bg-gray-700 dark:text-white"
               />
+              {/* Indicateur visuel de couleur du motif */}
+              {formData.motif && (
+                <div className="mt-2 flex items-center">
+                  <div
+                    className="w-4 h-4 rounded-full mr-2"
+                    style={{ backgroundColor: motifsData.find(m => m.id === parseInt(formData.motif!, 10))?.couleur || '#CCCCCC' }}
+                  ></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {motifsData.find(m => m.id === parseInt(formData.motif!, 10))?.libelle}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">

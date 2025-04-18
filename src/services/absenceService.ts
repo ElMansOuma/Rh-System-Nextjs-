@@ -2,35 +2,25 @@ import apiClient, { API_BASE_URL } from './api';
 
 const API_URL = `/api/absences`;
 
-// Modifié pour correspondre aux constantes de l'enum Java
-export type MotifAbsence =
-  'MALADIE' |
-  'CONGE_PAYE' |
-  'CONGE_SANS_SOLDE' |
-  'FORMATION' |
-  'EVENEMENT_FAMILIAL' |
-  'AUTRE';
-
-// Map pour convertir les noms d'enum en libellés affichables
-export const motifLibelles: Record<MotifAbsence, string> = {
-  'MALADIE': 'Maladie',
-  'CONGE_PAYE': 'Congé payé',
-  'CONGE_SANS_SOLDE': 'Congé sans solde',
-  'FORMATION': 'Formation',
-  'EVENEMENT_FAMILIAL': 'Événement familial',
-  'AUTRE': 'Autre'
-};
+// Modifié pour correspondre à l'entité MotifAbsence du backend
+export interface MotifAbsence {
+  id: number;
+  code: string;
+  libelle: string;
+  couleur: string;
+}
 
 export interface Absence {
   id?: number;
   collaborateurId: number;
   dateDebut: string; // format YYYY-MM-DD
   dateFin: string;   // format YYYY-MM-DD
-  motif: MotifAbsence;
+  motif: MotifAbsence; // changé pour correspondre à l'entity du backend
   observations?: string;
-  justificatif?: File | string | null;
+  justificatifPath?: string;
+  justificatifNom?: string;
   justificatifUrl?: string; // URL pour accéder au justificatif
-  justificatifNom?: string; // Nom du fichier justificatif
+  justificatif?: File | null; // Pour l'upload de fichier (non stocké dans le backend)
 }
 
 const absenceService = {
@@ -55,18 +45,19 @@ const absenceService = {
     return response.data;
   },
 
-  getMotifs: async () => {
-    const response = await apiClient.get(`${API_URL}/motifs`);
+  // Récupérer tous les motifs d'absence
+  getAllMotifs: async (): Promise<MotifAbsence[]> => {
+    const response = await apiClient.get(`/api/motifs-absence`);
     return response.data;
   },
 
-  // Obtenir la liste des motifs avec leurs libellés
-  getMotifOptions: async (): Promise<{value: MotifAbsence, label: string}[]> => {
-    const motifs = await absenceService.getMotifs();
-    // Créer des options pour les listes déroulantes
-    return Object.entries(motifLibelles).map(([value, label]) => ({
-      value: value as MotifAbsence,
-      label
+  // Créer des options pour les listes déroulantes
+  getMotifOptions: async (): Promise<{value: number, label: string, couleur: string}[]> => {
+    const motifs = await absenceService.getAllMotifs();
+    return motifs.map(motif => ({
+      value: motif.id,
+      label: motif.libelle,
+      couleur: motif.couleur
     }));
   },
 
@@ -74,8 +65,20 @@ const absenceService = {
     try {
       const { justificatif, ...absenceData } = absence;
 
-      // Créer l'absence sans le justificatif
-      const response = await apiClient.post(API_URL, absenceData);
+      // Créer un objet de requête correctement formaté - Conserve l'objet motif complet
+      const requestData = {
+        collaborateurId: absenceData.collaborateurId,
+        dateDebut: absenceData.dateDebut,
+        dateFin: absenceData.dateFin,
+        motif: absenceData.motif, // Envoi de l'objet motif complet
+        observations: absenceData.observations || ''
+      };
+
+      // Débogage - vérifier ce qui est envoyé
+      console.log('Sending absence data:', JSON.stringify(requestData));
+
+      // Envoyer les données d'absence
+      const response = await apiClient.post(API_URL, requestData);
 
       // Si un justificatif est fourni, l'uploader séparément
       if (justificatif && response.data.id && justificatif instanceof File) {
@@ -103,10 +106,19 @@ const absenceService = {
     try {
       const { justificatif, ...absenceData } = absence;
 
-      // Mettre à jour l'absence sans le justificatif
-      const response = await apiClient.put(`${API_URL}/${id}`, absenceData);
+      // Créer un objet de requête correctement formaté
+      const requestData = {
+        collaborateurId: absenceData.collaborateurId,
+        dateDebut: absenceData.dateDebut,
+        dateFin: absenceData.dateFin,
+        motif: absenceData.motif, // Envoi de l'objet motif complet
+        observations: absenceData.observations || ''
+      };
 
-      // Si un justificatif est fourni et c'est un fichier (pas une URL/string), l'uploader
+      // Mettre à jour l'absence avec l'objet motif complet
+      const response = await apiClient.put(`${API_URL}/${id}`, requestData);
+
+      // Si un justificatif est fourni et c'est un fichier, l'uploader
       if (justificatif && justificatif instanceof File) {
         const formData = new FormData();
         formData.append('justificatif', justificatif);
@@ -148,15 +160,20 @@ const absenceService = {
     }
   },
 
-  // Helper pour convertir un libellé en valeur d'enum
-  getMotifEnumFromLibelle: (libelle: string): MotifAbsence | undefined => {
-    const entry = Object.entries(motifLibelles).find(([_, value]) => value === libelle);
-    return entry ? entry[0] as MotifAbsence : undefined;
+  // Helper pour obtenir un motif par son code
+  getMotifByCode: async (code: string): Promise<MotifAbsence | undefined> => {
+    const motifs = await absenceService.getAllMotifs();
+    return motifs.find(motif => motif.code === code);
   },
 
-  // Helper pour obtenir le libellé à partir d'une valeur d'enum
-  getMotifLibelle: (motif: MotifAbsence): string => {
-    return motifLibelles[motif] || motif;
+  // Helper pour obtenir le libellé à partir d'un motif
+  getMotifLibelle: (motif: MotifAbsence | null): string => {
+    return motif ? motif.libelle : '';
+  },
+
+  // Helper pour obtenir la couleur à partir d'un motif
+  getMotifCouleur: (motif: MotifAbsence | null): string => {
+    return motif ? motif.couleur : '#CCCCCC'; // Couleur par défaut
   }
 };
 
